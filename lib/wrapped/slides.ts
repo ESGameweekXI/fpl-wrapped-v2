@@ -12,17 +12,40 @@ export interface WrappedSlide {
   emoji?: string;
 }
 
-function ordinalSuffix(n: number): string {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n.toLocaleString() + (s[(v - 20) % 10] || s[v] || s[0]);
+function fmt(val: number | null | undefined): string {
+  return (val ?? 0).toLocaleString();
 }
 
-function topPercent(rank: number, total = 10_000_000): string {
-  const pct = (rank / total) * 100;
+function ordinalSuffix(n: number | null | undefined): string {
+  const safe = n ?? 0;
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = safe % 100;
+  return safe.toLocaleString() + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function topPercent(rank: number | null | undefined, total = 10_000_000): string {
+  const safe = rank ?? 0;
+  if (safe <= 0) return '';
+  const pct = (safe / total) * 100;
   if (pct < 1) return 'Top 1%';
   return `Top ${Math.ceil(pct)}%`;
 }
+
+const FALLBACK_SLIDES: WrappedSlide[] = [
+  {
+    id: 'loading',
+    type: 'stat',
+    headline: 'No data yet',
+    description: 'Your season data is still syncing. Try again in a moment.',
+    emoji: '⏳',
+  },
+  {
+    id: 'thats-a-wrap',
+    type: 'cta',
+    headline: "That's a Wrap!",
+    emoji: '🎁',
+  },
+];
 
 function derivePersonality(data: ManagerData): {
   personality: string;
@@ -31,7 +54,7 @@ function derivePersonality(data: ManagerData): {
 } {
   const totalTransfers = data.transfers.length;
   const totalHits = data.history.reduce(
-    (sum, gw) => sum + (gw.event_transfers_cost > 0 ? gw.event_transfers_cost / 4 : 0),
+    (sum, gw) => sum + ((gw.event_transfers_cost ?? 0) > 0 ? (gw.event_transfers_cost ?? 0) / 4 : 0),
     0
   );
   const totalBenchPoints = data.history.reduce(
@@ -39,15 +62,12 @@ function derivePersonality(data: ManagerData): {
     0
   );
 
-  // Captain hit rate: GWs where captain scored more than any other player
-  // We approximate by checking if captain multiplier > 1 across all GWs
   const captainGws = data.picks.filter((p) => p.is_captain);
   const uniqueCaptainGws = new Set(captainGws.map((p) => p.gameweek)).size;
   const captainHitRate =
     data.history.length > 0 ? uniqueCaptainGws / data.history.length : 0;
 
-  // Check for chip usage via multiplier > 2 (triple captain = 3x)
-  const usedTripleCaptain = data.picks.some((p) => p.multiplier === 3);
+  const usedTripleCaptain = data.picks.some((p) => (p.multiplier ?? 0) === 3);
 
   if (totalTransfers <= 5) {
     return {
@@ -94,75 +114,79 @@ function derivePersonality(data: ManagerData): {
 export function computeSlides(data: ManagerData): WrappedSlide[] {
   const { manager, history, picks, transfers, gameweeks } = data;
 
-  const avgScoreByGw = new Map(gameweeks.map((gw) => [gw.id, gw.average_entry_score]));
+  // Guard: if we have no history at all, return a minimal fallback set
+  if (!history || history.length === 0) {
+    return FALLBACK_SLIDES;
+  }
+
+  const totalPoints = manager.summary_overall_points ?? 0;
+  const overallRank = manager.summary_overall_rank ?? 0;
+
+  const avgScoreByGw = new Map(gameweeks.map((gw) => [gw.id, gw.average_entry_score ?? 0]));
 
   // --- Slide 1: Your Season ---
-  const totalPoints = manager.summary_overall_points;
-  const overallRank = manager.summary_overall_rank;
-  const totalAvgPoints = history.reduce((sum, gw) => {
-    return sum + (avgScoreByGw.get(gw.gameweek) ?? 0);
-  }, 0);
+  const totalAvgPoints = history.reduce(
+    (sum, gw) => sum + (avgScoreByGw.get(gw.gameweek) ?? 0),
+    0
+  );
   const pointsDiff = totalPoints - totalAvgPoints;
+  const percentStr = topPercent(overallRank);
 
   const slide1: WrappedSlide = {
     id: 'your-season',
     type: 'stat',
     headline: 'Your Season in Numbers',
-    stat: ordinalSuffix(overallRank),
-    substat: `${totalPoints.toLocaleString()} points`,
-    comparison: `${pointsDiff >= 0 ? '+' : ''}${Math.round(pointsDiff)} pts vs global average · ${topPercent(overallRank)} of all managers`,
+    stat: overallRank > 0 ? ordinalSuffix(overallRank) : '—',
+    substat: `${fmt(totalPoints)} points`,
+    comparison: [
+      pointsDiff !== 0 ? `${pointsDiff >= 0 ? '+' : ''}${Math.round(pointsDiff)} pts vs global average` : null,
+      percentStr ? `${percentStr} of all managers` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ') || undefined,
     emoji: '🏆',
   };
 
   // --- Slide 2: Best Moment ---
   const bestGw = history.reduce(
-    (best, gw) => (gw.points > (best?.points ?? 0) ? gw : best),
+    (best, gw) => ((gw.points ?? 0) > (best.points ?? 0) ? gw : best),
     history[0]
   );
+  const bestGwAvg = avgScoreByGw.get(bestGw.gameweek) ?? 0;
+  const bestDiff = (bestGw.points ?? 0) - bestGwAvg;
 
   const slide2: WrappedSlide = {
     id: 'best-moment',
     type: 'stat',
     headline: 'Your Best Moment',
-    stat: `${bestGw?.points ?? 0} pts`,
-    substat: `Gameweek ${bestGw?.gameweek ?? '?'}`,
-    comparison: bestGw && avgScoreByGw.has(bestGw.gameweek)
-      ? `${bestGw.points - (avgScoreByGw.get(bestGw.gameweek) ?? 0) >= 0 ? '+' : ''}${bestGw.points - (avgScoreByGw.get(bestGw.gameweek) ?? 0)} vs GW average`
+    stat: `${fmt(bestGw.points)} pts`,
+    substat: `Gameweek ${bestGw.gameweek}`,
+    comparison: bestGwAvg > 0
+      ? `${bestDiff >= 0 ? '+' : ''}${bestDiff} vs GW average`
       : undefined,
     emoji: '⭐',
   };
 
   // --- Slide 3: Worst Nightmare ---
   const worstGw = history.reduce(
-    (worst, gw) => (gw.points < (worst?.points ?? Infinity) ? gw : worst),
+    (worst, gw) => ((gw.points ?? Infinity) < (worst.points ?? Infinity) ? gw : worst),
     history[0]
   );
+  const worstGwAvg = avgScoreByGw.get(worstGw.gameweek) ?? 0;
 
   const slide3: WrappedSlide = {
     id: 'worst-nightmare',
     type: 'stat',
     headline: 'Your Worst Nightmare',
-    stat: `${worstGw?.points ?? 0} pts`,
-    substat: `Gameweek ${worstGw?.gameweek ?? '?'}`,
-    comparison: worstGw && avgScoreByGw.has(worstGw.gameweek)
-      ? `GW average was ${avgScoreByGw.get(worstGw.gameweek)} pts`
-      : undefined,
+    stat: `${fmt(worstGw.points)} pts`,
+    substat: `Gameweek ${worstGw.gameweek}`,
+    comparison: worstGwAvg > 0 ? `GW average was ${fmt(worstGwAvg)} pts` : undefined,
     emoji: '😱',
   };
 
   // --- Slide 4: Captain's Log ---
   const captainPicks = picks.filter((p) => p.is_captain);
   const uniqueCaptainGws = Array.from(new Set(captainPicks.map((p) => p.gameweek)));
-  const totalCaptainPoints = history.reduce((sum, gw) => {
-    const captainPick = captainPicks.find((p) => p.gameweek === gw.gameweek);
-    if (!captainPick) return sum;
-    // Approximate: captain points counted at 2x (or 3x for TC), so extract raw
-    // We don't have individual player stats, so we track multiplier
-    return sum + (captainPick.multiplier > 1 ? captainPick.multiplier : 2);
-  }, 0);
-
-  // Better captain points approximation: we can't get individual player points
-  // without the player_stats table, so we just note the number of GWs captained
   const captainGwCount = uniqueCaptainGws.length;
   const captainRate =
     history.length > 0 ? Math.round((captainGwCount / history.length) * 100) : 0;
@@ -173,19 +197,18 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     headline: "Captain's Log",
     stat: `${captainGwCount} GWs captained`,
     substat: `${captainRate}% captain consistency`,
-    comparison: totalCaptainPoints > 0 ? `Captaincy multiplier used ${captainGwCount} times` : undefined,
     emoji: '🅲',
   };
 
   // --- Slide 5: Transfer Window ---
   const totalTransfers = transfers.length;
-  const totalHitGws = history.filter((gw) => gw.event_transfers_cost > 0);
+  const totalHitGws = history.filter((gw) => (gw.event_transfers_cost ?? 0) > 0);
   const totalHits = totalHitGws.reduce(
-    (sum, gw) => sum + gw.event_transfers_cost / 4,
+    (sum, gw) => sum + (gw.event_transfers_cost ?? 0) / 4,
     0
   );
   const totalHitPoints = totalHitGws.reduce(
-    (sum, gw) => sum + gw.event_transfers_cost,
+    (sum, gw) => sum + (gw.event_transfers_cost ?? 0),
     0
   );
 
@@ -208,20 +231,18 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     0
   );
   const worstBenchGw = history.reduce(
-    (worst, gw) =>
-      (gw.points_on_bench ?? 0) > ((worst?.points_on_bench ?? 0))
-        ? gw
-        : worst,
+    (worst, gw) => ((gw.points_on_bench ?? 0) > (worst.points_on_bench ?? 0) ? gw : worst),
     history[0]
   );
+  const avgBenchPerGw = history.length > 0 ? Math.round(totalBenchPoints / history.length) : 0;
 
   const slide6: WrappedSlide = {
     id: 'bench-heartbreak',
     type: 'stat',
     headline: 'Bench Heartbreak',
-    stat: `${totalBenchPoints} pts on bench`,
-    substat: `Worst GW: ${worstBenchGw?.points_on_bench ?? 0} pts (GW${worstBenchGw?.gameweek ?? '?'})`,
-    comparison: totalBenchPoints > 0 ? `That could have been ${Math.round(totalBenchPoints / (history.length || 1))} extra pts per GW` : undefined,
+    stat: `${fmt(totalBenchPoints)} pts on bench`,
+    substat: `Worst GW: ${fmt(worstBenchGw.points_on_bench)} pts (GW${worstBenchGw.gameweek})`,
+    comparison: totalBenchPoints > 0 ? `${avgBenchPerGw} extra pts per GW left unrealised` : undefined,
     emoji: '😢',
   };
 
@@ -243,7 +264,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     type: 'cta',
     headline: "That's a Wrap!",
     substat: manager.team_name,
-    description: `${overallRank.toLocaleString()} overall rank · ${totalPoints.toLocaleString()} pts`,
+    description: `${fmt(overallRank)} overall rank · ${fmt(totalPoints)} pts`,
     emoji: '🎁',
   };
 
