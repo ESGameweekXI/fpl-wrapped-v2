@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/api/wrapped-data/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}
