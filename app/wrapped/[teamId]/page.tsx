@@ -27,7 +27,7 @@ export default async function WrappedPage({
 
   const personalitySlide = slides.find((s) => s.type === 'personality');
   const shareData = {
-    teamName: data.manager.team_name,
+    teamName: data.manager.entry_name,
     overallRank: data.manager.summary_overall_rank,
     totalPoints: data.manager.summary_overall_points,
     personality: personalitySlide?.personality ?? 'The Steady Hand',

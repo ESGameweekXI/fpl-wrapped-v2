@@ -2,28 +2,28 @@ import { createServerClient } from './server-client';
 
 export interface ManagerRow {
   id: number;
-  team_name: string;
-  player_first_name: string;
-  player_last_name: string;
+  entry_name: string;
+  player_name: string;
+  // Derived from the last manager_history row (not stored on managers table)
   summary_overall_points: number;
   summary_overall_rank: number;
 }
 
 export interface HistoryRow {
   manager_id: number;
-  gameweek: number;
+  event: number;
   points: number;
   total_points: number;
   rank: number;
   overall_rank: number;
-  event_transfers: number;
+  // These columns may not exist in the schema; will normalise to 0 if absent
   event_transfers_cost: number;
   points_on_bench: number;
 }
 
 export interface PickRow {
   manager_id: number;
-  gameweek: number;
+  event: number;
   element: number;
   position: number;
   multiplier: number;
@@ -75,12 +75,12 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
         .from('manager_history')
         .select('*')
         .eq('manager_id', teamId)
-        .order('gameweek', { ascending: true }),
+        .order('event', { ascending: true }),
       db
         .from('manager_picks')
         .select('*')
         .eq('manager_id', teamId)
-        .order('gameweek', { ascending: true }),
+        .order('event', { ascending: true }),
       db
         .from('manager_transfers')
         .select('*')
@@ -95,36 +95,36 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
 
   if (managerRes.error || !managerRes.data) return null;
 
-  // Normalise manager — numeric fields from Supabase may be null
-  const raw = managerRes.data as Record<string, unknown>;
-  const manager: ManagerRow = {
-    id: n(raw.id) || teamId,
-    team_name: s(raw.team_name, 'Unknown Team'),
-    player_first_name: s(raw.player_first_name),
-    player_last_name: s(raw.player_last_name),
-    summary_overall_points: n(raw.summary_overall_points),
-    summary_overall_rank: n(raw.summary_overall_rank),
-  };
-
-  // Normalise history rows — all numeric fields default to 0
+  // Normalise history rows first so we can derive season totals for the manager row
   const history: HistoryRow[] = ((historyRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({
       manager_id: n(row.manager_id) || teamId,
-      gameweek: n(row.gameweek),
+      event: n(row.event),
       points: n(row.points),
       total_points: n(row.total_points),
       rank: n(row.rank),
       overall_rank: n(row.overall_rank),
-      event_transfers: n(row.event_transfers),
+      // Columns absent from the schema will come back as undefined → 0
       event_transfers_cost: n(row.event_transfers_cost),
       points_on_bench: n(row.points_on_bench),
     })
   );
 
-  // Normalise picks
+  // Derive overall season figures from the last (most recent) history entry
+  const lastHistory = history[history.length - 1];
+
+  const raw = managerRes.data as Record<string, unknown>;
+  const manager: ManagerRow = {
+    id: n(raw.id) || teamId,
+    entry_name: s(raw.entry_name, 'Unknown Team'),
+    player_name: s(raw.player_name),
+    summary_overall_points: lastHistory?.total_points ?? 0,
+    summary_overall_rank: lastHistory?.overall_rank ?? 0,
+  };
+
   const picks: PickRow[] = ((picksRes.data ?? []) as Record<string, unknown>[]).map((row) => ({
     manager_id: n(row.manager_id) || teamId,
-    gameweek: n(row.gameweek),
+    event: n(row.event),
     element: n(row.element),
     position: n(row.position),
     multiplier: n(row.multiplier),
@@ -132,7 +132,6 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     is_vice_captain: Boolean(row.is_vice_captain),
   }));
 
-  // Normalise transfers
   const transfers: TransferRow[] = ((transfersRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({
       manager_id: n(row.manager_id) || teamId,
@@ -145,7 +144,6 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     })
   );
 
-  // Normalise gameweeks
   const gameweeks: GameweekRow[] = ((gameweeksRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({
       id: n(row.id),

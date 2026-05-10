@@ -34,33 +34,43 @@ export async function syncManager(
       fplFetch('bootstrap-static/'),
     ]);
 
-  // Upsert manager
+  // Upsert manager — matches: id, entry_name, player_name, started_event, updated_at
   log('Syncing manager...');
   await db.from('managers').upsert({
     id: teamId,
-    team_name: entryData.name,
-    player_first_name: entryData.player_first_name,
-    player_last_name: entryData.player_last_name,
-    summary_overall_points: entryData.summary_overall_points,
-    summary_overall_rank: entryData.summary_overall_rank,
+    entry_name: entryData.name,
+    player_name: `${entryData.player_first_name} ${entryData.player_last_name}`.trim(),
+    started_event: entryData.started_event,
+    updated_at: new Date().toISOString(),
   });
 
-  // Sync gameweek averages from bootstrap-static
+  // Sync gameweek averages — matches: id, name, deadline_time, finished, is_current, is_next, average_entry_score, updated_at
   log('Syncing gameweek averages...');
   const gameweekUpserts = bootstrapData.events
     .filter((gw: { finished: boolean }) => gw.finished)
-    .map((gw: { id: number; name: string; average_entry_score: number; deadline_time: string }) => ({
+    .map((gw: {
+      id: number;
+      name: string;
+      deadline_time: string;
+      finished: boolean;
+      is_current: boolean;
+      is_next: boolean;
+      average_entry_score: number;
+    }) => ({
       id: gw.id,
       name: gw.name,
-      average_entry_score: gw.average_entry_score,
       deadline_time: gw.deadline_time,
-      finished: true,
+      finished: gw.finished,
+      is_current: gw.is_current,
+      is_next: gw.is_next,
+      average_entry_score: gw.average_entry_score,
+      updated_at: new Date().toISOString(),
     }));
   if (gameweekUpserts.length > 0) {
     await db.from('gameweeks').upsert(gameweekUpserts, { onConflict: 'id' });
   }
 
-  // Sync manager history (current season)
+  // Sync manager history — matches: manager_id, event, points, total_points, rank, overall_rank
   log('Syncing manager history...');
   const historyUpserts = historyData.current.map(
     (gw: {
@@ -69,32 +79,22 @@ export async function syncManager(
       total_points: number;
       rank: number;
       overall_rank: number;
-      bank: number;
-      value: number;
-      event_transfers: number;
-      event_transfers_cost: number;
-      points_on_bench: number;
     }) => ({
       manager_id: teamId,
-      gameweek: gw.event,
+      event: gw.event,
       points: gw.points,
       total_points: gw.total_points,
       rank: gw.rank,
       overall_rank: gw.overall_rank,
-      bank: gw.bank,
-      value: gw.value,
-      event_transfers: gw.event_transfers,
-      event_transfers_cost: gw.event_transfers_cost,
-      points_on_bench: gw.points_on_bench,
     })
   );
   if (historyUpserts.length > 0) {
     await db
       .from('manager_history')
-      .upsert(historyUpserts, { onConflict: 'manager_id,gameweek' });
+      .upsert(historyUpserts, { onConflict: 'manager_id,event' });
   }
 
-  // Sync picks in batches
+  // Sync picks in batches — matches: manager_id, event, element, position, multiplier, is_captain, is_vice_captain
   log('Syncing manager picks...');
   const finishedGws: number[] = bootstrapData.events
     .filter((gw: { finished: boolean }) => gw.finished)
@@ -122,7 +122,7 @@ export async function syncManager(
           }) => {
             picksToUpsert.push({
               manager_id: teamId,
-              gameweek: gw,
+              event: gw,
               element: pick.element,
               position: pick.position,
               multiplier: pick.multiplier,
@@ -137,29 +137,28 @@ export async function syncManager(
     if (picksToUpsert.length > 0) {
       await db
         .from('manager_picks')
-        .upsert(picksToUpsert, { onConflict: 'manager_id,gameweek,element' });
+        .upsert(picksToUpsert, { onConflict: 'manager_id,event,element' });
     }
   }
 
-  // Sync transfers
+  // Sync transfers — matches: manager_id, event, element_in, element_in_cost, element_out, element_out_cost, time
   log('Syncing manager transfers...');
   const transferUpserts = transfersData.map(
     (t: {
       element_in: number;
       element_out: number;
-      entry: number;
       event: number;
       time: string;
       element_in_cost: number;
       element_out_cost: number;
     }) => ({
       manager_id: teamId,
-      element_in: t.element_in,
-      element_out: t.element_out,
       event: t.event,
-      time: t.time,
+      element_in: t.element_in,
       element_in_cost: t.element_in_cost,
+      element_out: t.element_out,
       element_out_cost: t.element_out_cost,
+      time: t.time,
     })
   );
   if (transferUpserts.length > 0) {
