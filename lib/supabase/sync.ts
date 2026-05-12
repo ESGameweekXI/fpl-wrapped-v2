@@ -141,6 +141,38 @@ export async function syncManager(
     }
   }
 
+  // Sync player gameweek stats — matches: player_id, event, total_points, minutes
+  log('Syncing player gameweek stats...');
+  for (let i = 0; i < finishedGws.length; i += BATCH_SIZE) {
+    const batch = finishedGws.slice(i, i + BATCH_SIZE);
+    const liveResults = await Promise.allSettled(
+      batch.map((gw) => fplFetch(`event/${gw}/live/`))
+    );
+
+    const statsToUpsert: object[] = [];
+    liveResults.forEach((result, idx) => {
+      if (result.status === 'fulfilled') {
+        const gw = batch[idx];
+        const elements: { id: number; stats: { total_points: number; minutes: number } }[] =
+          result.value.elements ?? [];
+        elements.forEach((el) => {
+          statsToUpsert.push({
+            player_id: el.id,
+            event: gw,
+            total_points: el.stats.total_points ?? 0,
+            minutes: el.stats.minutes ?? 0,
+          });
+        });
+      }
+    });
+
+    if (statsToUpsert.length > 0) {
+      await db
+        .from('player_gameweek_stats')
+        .upsert(statsToUpsert, { onConflict: 'player_id,event' });
+    }
+  }
+
   // Sync transfers — matches: manager_id, event, element_in, element_in_cost, element_out, element_out_cost, time
   log('Syncing manager transfers...');
   const transferUpserts = transfersData.map(

@@ -47,12 +47,21 @@ export interface GameweekRow {
   average_entry_score: number;
 }
 
+export interface CaptainStatRow {
+  player_id: number;
+  event: number;
+  total_points: number;
+  minutes: number;
+}
+
 export interface ManagerData {
   manager: ManagerRow;
   history: HistoryRow[];
   picks: PickRow[];
   transfers: TransferRow[];
   gameweeks: GameweekRow[];
+  captainStats: CaptainStatRow[];
+  captainNames: Record<number, string>;
 }
 
 // Supabase returns null for any column that has no value, even when our
@@ -122,6 +131,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     summary_overall_rank: lastHistory?.overall_rank ?? 0,
   };
 
+  // Normalise picks
   const picks: PickRow[] = ((picksRes.data ?? []) as Record<string, unknown>[]).map((row) => ({
     manager_id: n(row.manager_id) || teamId,
     event: n(row.event),
@@ -131,6 +141,43 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     is_captain: Boolean(row.is_captain),
     is_vice_captain: Boolean(row.is_vice_captain),
   }));
+
+  // Fetch player_gameweek_stats only for players this manager captained
+  const captainIds = [
+    ...new Set(
+      picks.filter((p) => p.is_captain && p.element > 0).map((p) => p.element)
+    ),
+  ];
+
+  const [captainStatsRes, captainNamesRes] =
+    captainIds.length > 0
+      ? await Promise.all([
+          db
+            .from('player_gameweek_stats')
+            .select('player_id, event, total_points, minutes')
+            .in('player_id', captainIds),
+          db
+            .from('players')
+            .select('id, web_name')
+            .in('id', captainIds),
+        ])
+      : [{ data: [], error: null }, { data: [], error: null }];
+
+  const captainStats: CaptainStatRow[] = (
+    (captainStatsRes.data ?? []) as Record<string, unknown>[]
+  ).map((row) => ({
+    player_id: n(row.player_id),
+    event: n(row.event),
+    total_points: n(row.total_points),
+    minutes: n(row.minutes),
+  }));
+
+  const captainNames: Record<number, string> = Object.fromEntries(
+    ((captainNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => [
+      n(row.id),
+      s(row.web_name),
+    ])
+  );
 
   const transfers: TransferRow[] = ((transfersRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({
@@ -152,5 +199,5 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     })
   );
 
-  return { manager, history, picks, transfers, gameweeks };
+  return { manager, history, picks, transfers, gameweeks, captainStats, captainNames };
 }

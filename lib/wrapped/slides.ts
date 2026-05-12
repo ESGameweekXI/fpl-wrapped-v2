@@ -119,7 +119,7 @@ function derivePersonality(data: ManagerData): {
 }
 
 export function computeSlides(data: ManagerData): WrappedSlide[] {
-  const { manager, history, picks, transfers, gameweeks } = data;
+  const { manager, history, picks, transfers, gameweeks, captainStats, captainNames } = data;
 
   // Guard: if we have no history at all, return a minimal fallback set
   if (!history || history.length === 0) {
@@ -188,17 +188,34 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
 
   // --- Slide 3: Captain's Log ---
   const captainPicks = picks.filter((p) => p.is_captain);
-  const uniqueCaptainGws = Array.from(new Set(captainPicks.map((p) => p.event)));
-  const captainGwCount = uniqueCaptainGws.length;
-  const captainRate =
-    history.length > 0 ? Math.round((captainGwCount / history.length) * 100) : 0;
+  const captainGwCount = new Set(captainPicks.map((p) => p.event)).size;
+
+  // Most captained player by count
+  const captainFreq = new Map<number, number>();
+  captainPicks.forEach((p) => captainFreq.set(p.element, (captainFreq.get(p.element) ?? 0) + 1));
+  const mostCaptainedId = [...captainFreq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0;
+
+  // Captain hits: GWs where the captain scored ≥ 4 points
+  const captainStatsByEvent = new Map(
+    captainStats.map((s) => [`${s.player_id}:${s.event}`, s.total_points])
+  );
+  const captainHits = captainPicks.filter((p) => {
+    const pts = captainStatsByEvent.get(`${p.element}:${p.event}`) ?? 0;
+    return pts >= 4;
+  }).length;
+
+  const captainHitRate =
+    captainGwCount > 0 ? Math.round((captainHits / captainGwCount) * 100) : 0;
 
   const slide3: WrappedSlide = {
     id: 'captains-log',
     type: 'stat',
     headline: "Captain's Log",
-    stat: `${captainGwCount} GWs captained`,
-    substat: `${captainRate}% captain consistency`,
+    stat: `${captainHits} of ${captainGwCount} captains hit`,
+    substat: mostCaptainedId > 0
+      ? `Most captained: ${captainNames[mostCaptainedId] ?? `Player #${mostCaptainedId}`}`
+      : undefined,
+    comparison: `${captainHitRate}% hit rate`,
     emoji: '🅲',
   };
 
