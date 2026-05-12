@@ -20,9 +20,13 @@ export default function Slide({ slide, position, shareData }: SlideProps) {
 
   return (
     <div className={`wrapped-slide ${posClass}`}>
-      {slide.emoji && <div className="wrapped-emoji">{slide.emoji}</div>}
+      {slide.type !== 'split' && slide.emoji && (
+        <div className="wrapped-emoji">{slide.emoji}</div>
+      )}
 
-      <h2 className="wrapped-headline">{slide.headline}</h2>
+      {slide.type !== 'split' && (
+        <h2 className="wrapped-headline">{slide.headline}</h2>
+      )}
 
       {slide.type === 'stat' && (
         <>
@@ -32,6 +36,79 @@ export default function Slide({ slide, position, shareData }: SlideProps) {
             <p className="wrapped-comparison">{slide.comparison}</p>
           )}
         </>
+      )}
+
+      {slide.type === 'split' && (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%',
+          height: '100%',
+        }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', padding: '0.25rem 0 0.75rem' }}>
+            {slide.emoji && (
+              <span style={{ fontSize: '1.4rem', marginRight: '0.4rem' }}>{slide.emoji}</span>
+            )}
+            <h2 className="wrapped-headline" style={{
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)',
+              display: 'inline',
+              verticalAlign: 'middle',
+            }}>
+              {slide.headline}
+            </h2>
+          </div>
+
+          {/* Top half — best */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0.5rem 1rem',
+          }}>
+            {slide.topStat && (
+              <div className="wrapped-stat">{slide.topStat}</div>
+            )}
+            {slide.topSubstat && (
+              <div className="wrapped-substat">{slide.topSubstat}</div>
+            )}
+            {slide.topComparison && (
+              <p className="wrapped-comparison">{slide.topComparison}</p>
+            )}
+          </div>
+
+          {/* Divider */}
+          <hr style={{
+            border: 'none',
+            borderTop: '1px solid rgba(0,255,194,0.2)',
+            margin: '0',
+            width: '100%',
+          }} />
+
+          {/* Bottom half — worst */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0.5rem 1rem',
+          }}>
+            {slide.bottomStat && (
+              <div className="wrapped-stat" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                {slide.bottomStat}
+              </div>
+            )}
+            {slide.bottomSubstat && (
+              <div className="wrapped-substat">{slide.bottomSubstat}</div>
+            )}
+            {slide.bottomComparison && (
+              <p className="wrapped-comparison">{slide.bottomComparison}</p>
+            )}
+          </div>
+        </div>
       )}
 
       {slide.type === 'personality' && (

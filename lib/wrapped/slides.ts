@@ -2,7 +2,7 @@ import type { ManagerData } from '@/lib/supabase/queries';
 
 export interface WrappedSlide {
   id: string;
-  type: 'stat' | 'personality' | 'cta';
+  type: 'stat' | 'split' | 'personality' | 'cta';
   headline: string;
   stat?: string;
   substat?: string;
@@ -10,6 +10,13 @@ export interface WrappedSlide {
   description?: string;
   personality?: string;
   emoji?: string;
+  // split type fields
+  topStat?: string;
+  topSubstat?: string;
+  topComparison?: string;
+  bottomStat?: string;
+  bottomSubstat?: string;
+  bottomComparison?: string;
 }
 
 function fmt(val: number | null | undefined): string {
@@ -147,7 +154,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     emoji: '🏆',
   };
 
-  // --- Slide 2: Best Moment ---
+  // --- Slide 2: Best & Worst (split) ---
   const bestGw = history.reduce(
     (best, gw) => ((gw.points ?? 0) > (best.points ?? 0) ? gw : best),
     history[0]
@@ -155,43 +162,38 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   const bestGwAvg = avgScoreByGw.get(bestGw.event) ?? 0;
   const bestDiff = (bestGw.points ?? 0) - bestGwAvg;
 
-  const slide2: WrappedSlide = {
-    id: 'best-moment',
-    type: 'stat',
-    headline: 'Your Best Moment',
-    stat: `${fmt(bestGw.points)} pts`,
-    substat: `Gameweek ${bestGw.event}`,
-    comparison: bestGwAvg > 0
-      ? `${bestDiff >= 0 ? '+' : ''}${bestDiff} vs GW average`
-      : undefined,
-    emoji: '⭐',
-  };
-
-  // --- Slide 3: Worst Nightmare ---
   const worstGw = history.reduce(
     (worst, gw) => ((gw.points ?? Infinity) < (worst.points ?? Infinity) ? gw : worst),
     history[0]
   );
   const worstGwAvg = avgScoreByGw.get(worstGw.event) ?? 0;
+  const worstDiff = (worstGw.points ?? 0) - worstGwAvg;
 
-  const slide3: WrappedSlide = {
-    id: 'worst-nightmare',
-    type: 'stat',
-    headline: 'Your Worst Nightmare',
-    stat: `${fmt(worstGw.points)} pts`,
-    substat: `Gameweek ${worstGw.event}`,
-    comparison: worstGwAvg > 0 ? `GW average was ${fmt(worstGwAvg)} pts` : undefined,
-    emoji: '😱',
+  const slide2: WrappedSlide = {
+    id: 'best-worst',
+    type: 'split',
+    headline: 'Your Season in Two Moments',
+    emoji: '📊',
+    topStat: `${fmt(bestGw.points)} pts`,
+    topSubstat: `Your Best — Gameweek ${bestGw.event}`,
+    topComparison: bestGwAvg > 0
+      ? `${bestDiff >= 0 ? '+' : ''}${bestDiff} vs GW average`
+      : undefined,
+    bottomStat: `${fmt(worstGw.points)} pts`,
+    bottomSubstat: `Your Worst — Gameweek ${worstGw.event}`,
+    bottomComparison: worstGwAvg > 0
+      ? `${worstDiff >= 0 ? '+' : ''}${worstDiff} vs GW average`
+      : undefined,
   };
 
-  // --- Slide 4: Captain's Log ---
+  // --- Slide 3: Captain's Log ---
   const captainPicks = picks.filter((p) => p.is_captain);
   const uniqueCaptainGws = Array.from(new Set(captainPicks.map((p) => p.event)));
   const captainGwCount = uniqueCaptainGws.length;
   const captainRate =
     history.length > 0 ? Math.round((captainGwCount / history.length) * 100) : 0;
 
-  const slide4: WrappedSlide = {
+  const slide3: WrappedSlide = {
     id: 'captains-log',
     type: 'stat',
     headline: "Captain's Log",
@@ -200,7 +202,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     emoji: '🅲',
   };
 
-  // --- Slide 5: Transfer Window ---
+  // --- Slide 4: Transfer Window ---
   const totalTransfers = transfers.length;
   const totalHitGws = history.filter((gw) => (gw.event_transfers_cost ?? 0) > 0);
   const totalHits = totalHitGws.reduce(
@@ -212,7 +214,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     0
   );
 
-  const slide5: WrappedSlide = {
+  const slide4: WrappedSlide = {
     id: 'transfer-window',
     type: 'stat',
     headline: 'Transfer Window',
@@ -225,7 +227,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     emoji: '🔄',
   };
 
-  // --- Slide 6: Bench Heartbreak ---
+  // --- Slide 5: Bench Heartbreak ---
   const totalBenchPoints = history.reduce(
     (sum, gw) => sum + (gw.points_on_bench ?? 0),
     0
@@ -236,7 +238,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   );
   const avgBenchPerGw = history.length > 0 ? Math.round(totalBenchPoints / history.length) : 0;
 
-  const slide6: WrappedSlide = {
+  const slide5: WrappedSlide = {
     id: 'bench-heartbreak',
     type: 'stat',
     headline: 'Bench Heartbreak',
@@ -246,10 +248,10 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     emoji: '😢',
   };
 
-  // --- Slide 7: FPL Personality ---
+  // --- Slide 6: FPL Personality ---
   const { personality, description, emoji } = derivePersonality(data);
 
-  const slide7: WrappedSlide = {
+  const slide6: WrappedSlide = {
     id: 'fpl-personality',
     type: 'personality',
     headline: 'Your FPL Personality',
@@ -258,8 +260,8 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     emoji,
   };
 
-  // --- Slide 8: That's a Wrap ---
-  const slide8: WrappedSlide = {
+  // --- Slide 7: That's a Wrap ---
+  const slide7: WrappedSlide = {
     id: 'thats-a-wrap',
     type: 'cta',
     headline: "That's a Wrap!",
@@ -268,5 +270,5 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     emoji: '🎁',
   };
 
-  return [slide1, slide2, slide3, slide4, slide5, slide6, slide7, slide8];
+  return [slide1, slide2, slide3, slide4, slide5, slide6, slide7];
 }
