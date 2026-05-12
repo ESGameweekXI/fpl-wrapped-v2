@@ -119,7 +119,17 @@ function derivePersonality(data: ManagerData): {
 }
 
 export function computeSlides(data: ManagerData): WrappedSlide[] {
-  const { manager, history, picks, transfers, gameweeks, captainStats, captainNames } = data;
+  const {
+    manager,
+    history,
+    picks,
+    transfers,
+    gameweeks,
+    captainStats,
+    captainNames,
+    transferStats,
+    transferPlayerNames,
+  } = data;
 
   // Guard: if we have no history at all, return a minimal fallback set
   if (!history || history.length === 0) {
@@ -231,17 +241,72 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     0
   );
 
+  // Biggest regret: sold player who scored the most after being permanently sold
+  // Build a map of player_id → all their stats by event for quick lookup
+  const transferStatsByPlayer = new Map<number, Map<number, number>>();
+  for (const stat of transferStats) {
+    if (!transferStatsByPlayer.has(stat.player_id)) {
+      transferStatsByPlayer.set(stat.player_id, new Map());
+    }
+    transferStatsByPlayer.get(stat.player_id)!.set(stat.event, stat.total_points);
+  }
+
+  // For each unique sold player, find the last GW they were sold
+  const lastSaleGw = new Map<number, number>();
+  for (const t of transfers) {
+    const current = lastSaleGw.get(t.element_out) ?? 0;
+    if (t.event > current) lastSaleGw.set(t.element_out, t.event);
+  }
+
+  // Build set of (player_id, min_event) pairs where player was re-bought after last sale
+  const reBoughtAfter = new Map<number, number>(); // player_id → earliest re-buy event
+  for (const t of transfers) {
+    const lastSold = lastSaleGw.get(t.element_in);
+    if (lastSold !== undefined && t.event > lastSold) {
+      const current = reBoughtAfter.get(t.element_in) ?? Infinity;
+      if (t.event < current) reBoughtAfter.set(t.element_in, t.event);
+    }
+  }
+
+  // Sum points after last sale for permanently sold players
+  let regretPlayerId = 0;
+  let regretPoints = 0;
+  let regretSaleGw = 0;
+
+  for (const [playerId, saleGw] of lastSaleGw.entries()) {
+    if (reBoughtAfter.has(playerId)) continue; // re-bought — skip
+
+    const statsByEvent = transferStatsByPlayer.get(playerId);
+    if (!statsByEvent) continue;
+
+    let ptsAfterSale = 0;
+    for (const [event, pts] of statsByEvent.entries()) {
+      if (event > saleGw) ptsAfterSale += pts;
+    }
+
+    if (ptsAfterSale > regretPoints) {
+      regretPoints = ptsAfterSale;
+      regretPlayerId = playerId;
+      regretSaleGw = saleGw;
+    }
+  }
+
+  const hasRegret = regretPlayerId > 0 && regretPoints > 0;
+  const regretName = hasRegret
+    ? (transferPlayerNames[regretPlayerId] ?? `Player #${regretPlayerId}`)
+    : null;
+
   const slide4: WrappedSlide = {
     id: 'transfer-window',
-    type: 'stat',
+    type: 'split',
     headline: 'Transfer Window',
-    stat: `${totalTransfers} transfers`,
-    substat: `${totalHits} hits · −${totalHitPoints} pts`,
-    comparison:
-      totalHits === 0
-        ? 'Clean sheet — no points deductions all season'
-        : `${totalHitPoints} points lost to transfer hits`,
     emoji: '🔄',
+    topStat: `${totalTransfers} transfers`,
+    topSubstat: totalHits > 0 ? `${totalHits} hits — −${totalHitPoints} pts` : 'No hits taken',
+    topComparison: totalHits > 0 ? 'Each hit cost 4 pts' : 'Clean sheet all season',
+    bottomStat: hasRegret ? `${fmt(regretPoints)} pts after you sold them` : 'No regrets',
+    bottomSubstat: hasRegret && regretName ? `Biggest Regret: ${regretName}` : undefined,
+    bottomComparison: hasRegret ? `Sold in GW${regretSaleGw} and never bought back` : undefined,
   };
 
   // --- Slide 5: Bench Heartbreak ---
