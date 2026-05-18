@@ -129,7 +129,7 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
   }
 
   // 6. Optimizer — disciplined and ranked well
-  if (totalHits <= 2 && totalTransfers <= 25 && overallRank > 0 && overallRank < 1_000_000) {
+  if (totalHits <= 2 && totalTransfers < 30 && overallRank > 0 && overallRank < 1_000_000) {
     return {
       personality: 'The Optimizer',
       description:
