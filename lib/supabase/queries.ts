@@ -64,6 +64,8 @@ export interface ManagerData {
   captainNames: Record<number, string>;
   transferStats: CaptainStatRow[];
   transferPlayerNames: Record<number, string>;
+  benchStats: CaptainStatRow[];
+  benchPlayerNames: Record<number, string>;
 }
 
 // Supabase returns null for any column that has no value, even when our
@@ -164,29 +166,54 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     ),
   ];
 
-  // All four secondary queries run in parallel
+  // Bench player IDs from raw picks data (positions 12-15)
+  const rawPicksData = (picksRes.data ?? []) as Record<string, unknown>[];
+  const benchPlayerIds = [
+    ...new Set(
+      rawPicksData
+        .filter((r) => n(r.position) >= 12 && n(r.position) <= 15 && n(r.element) > 0)
+        .map((r) => n(r.element))
+    ),
+  ];
+
+  // All six secondary queries run in parallel
   const noRows = { data: [], error: null };
-  const [captainStatsRes, captainNamesRes, transferStatsRes, transferPlayerNamesRes] =
-    await Promise.all([
-      captainIds.length > 0
-        ? db
-            .from('player_gameweek_stats')
-            .select('player_id, event, total_points, minutes')
-            .in('player_id', captainIds)
-        : noRows,
-      captainIds.length > 0
-        ? db.from('players').select('id, web_name').in('id', captainIds)
-        : noRows,
-      transferOutIds.length > 0
-        ? db
-            .from('player_gameweek_stats')
-            .select('player_id, event, total_points, minutes')
-            .in('player_id', transferOutIds)
-        : noRows,
-      transferAllIds.length > 0
-        ? db.from('players').select('id, web_name').in('id', transferAllIds)
-        : noRows,
-    ]);
+  const [
+    captainStatsRes,
+    captainNamesRes,
+    transferStatsRes,
+    transferPlayerNamesRes,
+    benchStatsRes,
+    benchPlayerNamesRes,
+  ] = await Promise.all([
+    captainIds.length > 0
+      ? db
+          .from('player_gameweek_stats')
+          .select('player_id, event, total_points, minutes')
+          .in('player_id', captainIds)
+      : noRows,
+    captainIds.length > 0
+      ? db.from('players').select('id, web_name').in('id', captainIds)
+      : noRows,
+    transferOutIds.length > 0
+      ? db
+          .from('player_gameweek_stats')
+          .select('player_id, event, total_points, minutes')
+          .in('player_id', transferOutIds)
+      : noRows,
+    transferAllIds.length > 0
+      ? db.from('players').select('id, web_name').in('id', transferAllIds)
+      : noRows,
+    benchPlayerIds.length > 0
+      ? db
+          .from('player_gameweek_stats')
+          .select('player_id, event, total_points, minutes')
+          .in('player_id', benchPlayerIds)
+      : noRows,
+    benchPlayerIds.length > 0
+      ? db.from('players').select('id, web_name').in('id', benchPlayerIds)
+      : noRows,
+  ]);
 
   const captainStats: CaptainStatRow[] = (
     (captainStatsRes.data ?? []) as Record<string, unknown>[]
@@ -215,6 +242,22 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
 
   const transferPlayerNames: Record<number, string> = Object.fromEntries(
     ((transferPlayerNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => [
+      n(row.id),
+      s(row.web_name),
+    ])
+  );
+
+  const benchStats: CaptainStatRow[] = (
+    (benchStatsRes.data ?? []) as Record<string, unknown>[]
+  ).map((row) => ({
+    player_id: n(row.player_id),
+    event: n(row.event),
+    total_points: n(row.total_points),
+    minutes: n(row.minutes),
+  }));
+
+  const benchPlayerNames: Record<number, string> = Object.fromEntries(
+    ((benchPlayerNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => [
       n(row.id),
       s(row.web_name),
     ])
@@ -250,5 +293,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     captainNames,
     transferStats,
     transferPlayerNames,
+    benchStats,
+    benchPlayerNames,
   };
 }

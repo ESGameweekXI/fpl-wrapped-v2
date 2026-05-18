@@ -129,6 +129,8 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     captainNames,
     transferStats,
     transferPlayerNames,
+    benchStats,
+    benchPlayerNames,
   } = data;
 
   // Guard: if we have no history at all, return a minimal fallback set
@@ -310,24 +312,56 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   };
 
   // --- Slide 5: Bench Heartbreak ---
-  const totalBenchPoints = history.reduce(
-    (sum, gw) => sum + (gw.points_on_bench ?? 0),
-    0
+  // Build a lookup: player_id:event → total_points from benchStats
+  const benchStatsByKey = new Map(
+    benchStats.map((s) => [`${s.player_id}:${s.event}`, s.total_points])
   );
-  const worstBenchGw = history.reduce(
-    (worst, gw) => ((gw.points_on_bench ?? 0) > (worst.points_on_bench ?? 0) ? gw : worst),
-    history[0]
-  );
-  const avgBenchPerGw = history.length > 0 ? Math.round(totalBenchPoints / history.length) : 0;
+
+  // Bench picks = positions 12-15
+  const benchPicks = picks.filter((p) => p.position >= 12 && p.position <= 15);
+
+  // Total bench points and hit count (scored ≥ 4)
+  let totalBenchPoints = 0;
+  let benchHits = 0;
+  const benchTotalByPlayer = new Map<number, number>();
+
+  for (const pick of benchPicks) {
+    const pts = benchStatsByKey.get(`${pick.element}:${pick.event}`) ?? 0;
+    totalBenchPoints += pts;
+    if (pts >= 4) benchHits++;
+    benchTotalByPlayer.set(pick.element, (benchTotalByPlayer.get(pick.element) ?? 0) + pts);
+  }
+
+  // Most costly bench player
+  let biggestWasteId = 0;
+  let biggestWastePts = 0;
+  for (const [playerId, pts] of benchTotalByPlayer.entries()) {
+    if (pts > biggestWastePts) {
+      biggestWastePts = pts;
+      biggestWasteId = playerId;
+    }
+  }
+
+  const hasBenchWaste = biggestWasteId > 0 && biggestWastePts > 0;
+  const biggestWasteName = hasBenchWaste
+    ? (benchPlayerNames[biggestWasteId] ?? `Player #${biggestWasteId}`)
+    : null;
 
   const slide5: WrappedSlide = {
     id: 'bench-heartbreak',
-    type: 'stat',
+    type: 'split',
     headline: 'Bench Heartbreak',
-    stat: `${fmt(totalBenchPoints)} pts on bench`,
-    substat: `Worst GW: ${fmt(worstBenchGw.points_on_bench)} pts (GW${worstBenchGw.event})`,
-    comparison: totalBenchPoints > 0 ? `${avgBenchPerGw} extra pts per GW left unrealised` : undefined,
     emoji: '😢',
+    topStat: `${fmt(totalBenchPoints)} pts left on bench all season`,
+    topSubstat: `${benchHits} times a benched player scored 4+`,
+    topComparison: 'Points you\'ll never get back',
+    bottomStat: hasBenchWaste ? `${fmt(biggestWastePts)} pts` : 'No regrets',
+    bottomSubstat: hasBenchWaste && biggestWasteName
+      ? `Biggest waste: ${biggestWasteName}`
+      : undefined,
+    bottomComparison: hasBenchWaste
+      ? `Scored ${fmt(biggestWastePts)} pts while sitting on your bench`
+      : undefined,
   };
 
   // --- Slide 6: FPL Personality ---
