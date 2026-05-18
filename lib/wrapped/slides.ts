@@ -77,21 +77,12 @@ interface PersonalityResult {
 
 function derivePersonality(p: PersonalityParams): PersonalityResult {
   const {
-    captainNames,
-    mostCaptainedId,
-    mostCaptainedCount,
     totalTransfers,
     totalHits,
     totalBenchPoints,
     overallRank,
     totalPoints,
-    historyLength,
   } = p;
-
-  const captainName =
-    mostCaptainedId > 0
-      ? (captainNames[mostCaptainedId] ?? `Player #${mostCaptainedId}`)
-      : 'Your captain';
 
   // 1. Panic Buyer — most distinctive, check first
   if (totalHits > 5) {
@@ -105,7 +96,7 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
   }
 
   // 2. Loyalist
-  if (totalTransfers <= 10) {
+  if (totalTransfers <= 20) {
     return {
       personality: 'The Loyalist',
       description:
@@ -115,18 +106,7 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
     };
   }
 
-  // 3. Captain Faithful — most captained player captained > 60% of GWs
-  if (historyLength > 0 && mostCaptainedCount / historyLength > 0.6) {
-    return {
-      personality: 'The Captain Faithful',
-      description:
-        "You found your armband man and you committed. No second-guessing, no drama — just pure, unwavering trust.",
-      emoji: '🏅',
-      earnedStat: `${captainName} wore your armband ${mostCaptainedCount} times`,
-    };
-  }
-
-  // 4. Unlucky One — big bench haul but bad rank
+  // 3. Unlucky One — big bench haul but bad rank
   if (totalBenchPoints > 120 && overallRank > 2_000_000) {
     return {
       personality: 'The Unlucky One',
