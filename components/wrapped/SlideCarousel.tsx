@@ -81,7 +81,6 @@ export default function SlideCarousel({ slides, shareData }: SlideCarouselProps)
             key={slide.id}
             slide={slide}
             position={position}
-            shareData={slide.type === 'cta' ? shareData : undefined}
           />
         );
       })}
