@@ -11,6 +11,27 @@ interface SlideCarouselProps {
   shareData: ShareData;
 }
 
+function buildTweetText(slide: WrappedSlide): string {
+  const suffix = ' @GameweekXI';
+  switch (slide.type) {
+    case 'stat': {
+      const middle = [slide.stat, slide.substat].filter(Boolean).join(' ');
+      return `${slide.headline}: ${middle} — see your FPL Wrapped${suffix}`;
+    }
+    case 'split': {
+      const middle = [slide.topStat, slide.topSubstat].filter(Boolean).join(' ');
+      return `${slide.headline}: ${middle} — see your FPL Wrapped${suffix}`;
+    }
+    case 'personality': {
+      const desc = slide.description ?? '';
+      const shortened = desc.length > 80 ? desc.slice(0, 77) + '...' : desc;
+      return `My FPL personality is ${slide.personality} — ${shortened}. See yours:${suffix}`;
+    }
+    default:
+      return `See your FPL Wrapped${suffix}`;
+  }
+}
+
 export default function SlideCarousel({ slides, shareData }: SlideCarouselProps) {
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -84,6 +105,43 @@ export default function SlideCarousel({ slides, shareData }: SlideCarouselProps)
           />
         );
       })}
+
+      {/* Share on X — shown on every slide except CTA */}
+      {slides[current]?.type !== 'cta' && (() => {
+        const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+        const text = buildTweetText(slides[current]);
+        const href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
+        return (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              bottom: '6.5rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              minHeight: '44px',
+              padding: '0 1.25rem',
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.8rem',
+              color: 'var(--brand-text-muted)',
+              opacity: 0.6,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              zIndex: 10,
+            }}
+          >
+            <span style={{ fontSize: '0.95rem', lineHeight: 1 }}>𝕏</span>
+            Share on X
+          </a>
+        );
+      })()}
 
       {/* Nav dots */}
       <nav className="wrapped-nav" onClick={(e) => e.stopPropagation()}>
