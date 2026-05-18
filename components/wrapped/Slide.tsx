@@ -202,7 +202,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
               maxWidth: '18rem',
               lineHeight: 1.4,
             }}>
-              Share &amp; follow @GameweekXI on X to win a football shirt of your choice
+              Share &amp; follow @GameweekXI on X for a chance to win a football shirt of your choice
             </p>
           </div>
 
