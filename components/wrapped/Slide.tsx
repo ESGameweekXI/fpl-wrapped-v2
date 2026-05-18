@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, forwardRef } from 'react';
+import { useState, forwardRef, type ReactNode } from 'react';
 import type { WrappedSlide } from '@/lib/wrapped/slides';
 
 interface SlideProps {
   slide: WrappedSlide;
   position: 'active' | 'prev' | 'next';
+  shareButton?: ReactNode;
 }
 
-const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, position }, ref) {
+const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, position, shareButton }, ref) {
   const [copied, setCopied] = useState(false);
 
   const posClass =
@@ -44,6 +45,10 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
         <h2 className="wrapped-headline">{slide.headline}</h2>
       )}
 
+      {slide.type !== 'split' && slide.type !== 'cta' && shareButton && (
+        <div style={{ marginBottom: '0.5rem' }}>{shareButton}</div>
+      )}
+
       {slide.type === 'stat' && (
         <>
           {slide.stat && <div className="wrapped-stat">{slide.stat}</div>}
@@ -74,6 +79,12 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
               {slide.headline}
             </h2>
           </div>
+
+          {shareButton && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '0.25rem 0' }}>
+              {shareButton}
+            </div>
+          )}
 
           {/* Top half — best */}
           <div style={{

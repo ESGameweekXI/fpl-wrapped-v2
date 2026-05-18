@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import type { WrappedSlide } from '@/lib/wrapped/slides';
 import Slide from './Slide';
 import ShareCard from './ShareCard';
@@ -12,21 +12,22 @@ interface SlideCarouselProps {
 }
 
 interface SlideShareButtonProps {
-  cardRef: { current: HTMLDivElement | null };
+  getCardEl: () => HTMLDivElement | null;
   slideId: string;
   slideHeadline: string;
 }
 
-function SlideShareButton({ cardRef, slideId }: SlideShareButtonProps) {
+function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
   const [sharing, setSharing] = useState(false);
 
   async function handleShare() {
-    if (!cardRef.current || sharing) return;
+    const el = getCardEl();
+    if (!el || sharing) return;
     setSharing(true);
     try {
       await document.fonts.ready;
       const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(cardRef.current, {
+      const canvas = await html2canvas(el, {
         scale: window.devicePixelRatio || 2,
         useCORS: true,
         backgroundColor: null,
@@ -45,7 +46,6 @@ function SlideShareButton({ cardRef, slideId }: SlideShareButtonProps) {
           url: window.location.href,
         });
       } else {
-        // Fallback: trigger a download
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `fpl-wrapped-${slideId}.png`;
@@ -130,8 +130,6 @@ export default function SlideCarousel({ slides, shareData }: SlideCarouselProps)
     x > mid ? goNext() : goPrev();
   };
 
-  const currentSlide = slides[current];
-
   return (
     <div
       className="wrapped-container"
@@ -155,36 +153,23 @@ export default function SlideCarousel({ slides, shareData }: SlideCarouselProps)
       {slides.map((slide, i) => {
         const position: 'active' | 'prev' | 'next' =
           i === current ? 'active' : i < current ? 'prev' : 'next';
+        const shareButton: ReactNode = slide.type !== 'cta' ? (
+          <SlideShareButton
+            getCardEl={() => slideRefs.current[i]}
+            slideId={slide.id}
+            slideHeadline={slide.headline}
+          />
+        ) : undefined;
         return (
           <Slide
             key={slide.id}
             ref={(el) => { slideRefs.current[i] = el; }}
             slide={slide}
             position={position}
+            shareButton={shareButton}
           />
         );
       })}
-
-      {/* Per-slide share button — hidden on CTA */}
-      {currentSlide?.type !== 'cta' && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'fixed',
-            bottom: '6.5rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10,
-          }}
-        >
-          <SlideShareButton
-            key={currentSlide?.id}
-            cardRef={{ current: slideRefs.current[current] }}
-            slideId={currentSlide?.id ?? ''}
-            slideHeadline={currentSlide?.headline ?? ''}
-          />
-        </div>
-      )}
 
       {/* Nav dots */}
       <nav className="wrapped-nav" onClick={(e) => e.stopPropagation()}>
