@@ -117,6 +117,21 @@ export default function Slide({ slide, position, shareData }: SlideProps) {
           {slide.description && (
             <p className="wrapped-description">{slide.description}</p>
           )}
+          {slide.earnedStat && (
+            <p style={{
+              marginTop: '1.5rem',
+              fontFamily: 'var(--font-body)',
+              fontStyle: 'italic',
+              fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+              color: 'var(--brand-secondary)',
+              opacity: 0.75,
+              letterSpacing: '0.03em',
+              maxWidth: '22rem',
+              textAlign: 'center',
+            }}>
+              earned because: {slide.earnedStat}
+            </p>
+          )}
         </>
       )}
 

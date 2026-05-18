@@ -9,6 +9,7 @@ export interface WrappedSlide {
   comparison?: string;
   description?: string;
   personality?: string;
+  earnedStat?: string;
   emoji?: string;
   // split type fields
   topStat?: string;
@@ -54,67 +55,117 @@ const FALLBACK_SLIDES: WrappedSlide[] = [
   },
 ];
 
-function derivePersonality(data: ManagerData): {
+interface PersonalityParams {
+  captainNames: Record<number, string>;
+  mostCaptainedId: number;
+  mostCaptainedCount: number;
+  captainGwCount: number;
+  totalTransfers: number;
+  totalHits: number;
+  totalBenchPoints: number;
+  overallRank: number;
+  totalPoints: number;
+  historyLength: number;
+}
+
+interface PersonalityResult {
   personality: string;
   description: string;
   emoji: string;
-} {
-  const totalTransfers = data.transfers.length;
-  const totalHits = data.history.reduce(
-    (sum, gw) => sum + ((gw.event_transfers_cost ?? 0) > 0 ? (gw.event_transfers_cost ?? 0) / 4 : 0),
-    0
-  );
-  const totalBenchPoints = data.history.reduce(
-    (sum, gw) => sum + (gw.points_on_bench ?? 0),
-    0
-  );
+  earnedStat: string;
+}
 
-  const captainGws = data.picks.filter((p) => p.is_captain);
-  const uniqueCaptainGws = new Set(captainGws.map((p) => p.event)).size;
-  const captainHitRate =
-    data.history.length > 0 ? uniqueCaptainGws / data.history.length : 0;
+function derivePersonality(p: PersonalityParams): PersonalityResult {
+  const {
+    captainNames,
+    mostCaptainedId,
+    mostCaptainedCount,
+    totalTransfers,
+    totalHits,
+    totalBenchPoints,
+    overallRank,
+    totalPoints,
+    historyLength,
+  } = p;
 
-  const usedTripleCaptain = data.picks.some((p) => (p.multiplier ?? 0) === 3);
+  const captainName =
+    mostCaptainedId > 0
+      ? (captainNames[mostCaptainedId] ?? `Player #${mostCaptainedId}`)
+      : 'Your captain';
 
-  if (totalTransfers <= 5) {
-    return {
-      personality: 'The Loyalist',
-      description: "You barely touched your squad all season. Set and forget — that's your motto.",
-      emoji: '🛡️',
-    };
-  }
-  if (totalHits > 8) {
+  // 1. Panic Buyer — most distinctive, check first
+  if (totalHits > 5) {
     return {
       personality: 'The Panic Buyer',
-      description: "When things went wrong, you hit the transfer button — hard. No ragrets.",
+      description:
+        "The transfer window was your happy place. While others held firm, you were never more than one bad week away from a knee-jerk reaction.",
       emoji: '🛒',
+      earnedStat: `${totalHits} hits taken this season`,
     };
   }
-  if (totalBenchPoints > 200) {
+
+  // 2. Loyalist
+  if (totalTransfers <= 10) {
     return {
-      personality: 'The Optimist',
-      description: "Your bench was stacked. Somehow your best players were always on the pitch… on the bench.",
-      emoji: '🌟',
+      personality: 'The Loyalist',
+      description:
+        "You picked your squad and stuck with it. While others were panic buying, you trusted the process all season long.",
+      emoji: '🛡️',
+      earnedStat: `Just ${totalTransfers} transfers all season`,
     };
   }
-  if (captainHitRate > 0.7) {
+
+  // 3. Captain Faithful — most captained player captained > 60% of GWs
+  if (historyLength > 0 && mostCaptainedCount / historyLength > 0.6) {
     return {
       personality: 'The Captain Faithful',
-      description: "You trusted your captain week in, week out. Loyalty is a virtue.",
-      emoji: '©️',
+      description:
+        "You found your armband man and you committed. No second-guessing, no drama — just pure, unwavering trust.",
+      emoji: '🏅',
+      earnedStat: `${captainName} wore your armband ${mostCaptainedCount} times`,
     };
   }
-  if (usedTripleCaptain) {
+
+  // 4. Unlucky One — big bench haul but bad rank
+  if (totalBenchPoints > 120 && overallRank > 2_000_000) {
     return {
-      personality: 'The Gambler',
-      description: "Triple captain? You came to play. High risk, high reward — that's the FPL way.",
-      emoji: '🎲',
+      personality: 'The Unlucky One',
+      description:
+        "The numbers don't lie — your bench cost you this season. You made good calls, they just didn't land.",
+      emoji: '😤',
+      earnedStat: `${fmt(totalBenchPoints)} pts rotting on your bench all season`,
     };
   }
+
+  // 5. Entertainer — chaotic all-round
+  if (totalHits > 2 && totalTransfers > 40 && totalBenchPoints > 80) {
+    return {
+      personality: 'The Entertainer',
+      description:
+        "Every week was an adventure. Your FPL season was chaotic, expensive, and honestly — kind of fun to watch.",
+      emoji: '🎪',
+      earnedStat: `${totalTransfers} transfers, ${totalHits} hits, ${fmt(totalBenchPoints)} bench pts — never a dull week`,
+    };
+  }
+
+  // 6. Optimizer — disciplined and ranked well
+  if (totalHits <= 2 && totalTransfers <= 25 && overallRank > 0 && overallRank < 1_000_000) {
+    return {
+      personality: 'The Optimizer',
+      description:
+        "Calm, calculated, consistent. You didn't chase the game — you let it come to you.",
+      emoji: '📈',
+      earnedStat: `${topPercent(overallRank)} globally with just ${totalTransfers} transfers`,
+    };
+  }
+
+  // 7. Steady Hand — default
   return {
     personality: 'The Steady Hand',
-    description: "Consistent, calculated, composed. You played the long game and stuck to the plan.",
+    description:
+      "Solid, sensible, reliable. You won't win the league on style points — but you're still standing at the end of a long season.",
     emoji: '⚖️',
+    earnedStat: `${fmt(totalPoints)} pts · Rank ${overallRank > 0 ? overallRank.toLocaleString() : '—'}`,
   };
 }
 
@@ -365,7 +416,19 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   };
 
   // --- Slide 6: FPL Personality ---
-  const { personality, description, emoji } = derivePersonality(data);
+  const mostCaptainedCount = captainFreq.get(mostCaptainedId) ?? 0;
+  const { personality, description, emoji, earnedStat } = derivePersonality({
+    captainNames,
+    mostCaptainedId,
+    mostCaptainedCount,
+    captainGwCount,
+    totalTransfers,
+    totalHits,
+    totalBenchPoints,
+    overallRank,
+    totalPoints,
+    historyLength: history.length,
+  });
 
   const slide6: WrappedSlide = {
     id: 'fpl-personality',
@@ -373,6 +436,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     headline: 'Your FPL Personality',
     personality,
     description,
+    earnedStat,
     emoji,
   };
 
