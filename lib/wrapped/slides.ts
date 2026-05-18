@@ -249,7 +249,60 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
       : undefined,
   };
 
-  // --- Slide 3: Captain's Log ---
+  // --- Slide 3: Rank Rollercoaster (omitted if < 2 GWs of history) ---
+  // history is already sorted ascending by event from the query
+  let slideRank: WrappedSlide | null = null;
+
+  if (history.length >= 2) {
+    let biggestClimb = 0;
+    let biggestClimbGw = 0;
+    let biggestClimbBefore = 0;
+    let biggestClimbAfter = 0;
+
+    let biggestFall = 0;
+    let biggestFallGw = 0;
+    let biggestFallBefore = 0;
+    let biggestFallAfter = 0;
+
+    for (let i = 1; i < history.length; i++) {
+      const prev = history[i - 1];
+      const curr = history[i];
+      // positive rankChange = rank number fell = climbed in standings
+      const rankChange = (prev.overall_rank ?? 0) - (curr.overall_rank ?? 0);
+
+      if (rankChange > biggestClimb) {
+        biggestClimb = rankChange;
+        biggestClimbGw = curr.event;
+        biggestClimbBefore = prev.overall_rank ?? 0;
+        biggestClimbAfter = curr.overall_rank ?? 0;
+      }
+      if (-rankChange > biggestFall) {
+        biggestFall = -rankChange;
+        biggestFallGw = curr.event;
+        biggestFallBefore = prev.overall_rank ?? 0;
+        biggestFallAfter = curr.overall_rank ?? 0;
+      }
+    }
+
+    slideRank = {
+      id: 'rank-rollercoaster',
+      type: 'split',
+      headline: 'Your Rank Rollercoaster',
+      emoji: '📈',
+      topStat: `▲ ${biggestClimb.toLocaleString()} places`,
+      topSubstat: `Biggest climb — Gameweek ${biggestClimbGw}`,
+      topComparison: biggestClimb > 0
+        ? `From ${biggestClimbBefore.toLocaleString()} to ${biggestClimbAfter.toLocaleString()}`
+        : undefined,
+      bottomStat: `▼ ${biggestFall.toLocaleString()} places`,
+      bottomSubstat: `Biggest fall — Gameweek ${biggestFallGw}`,
+      bottomComparison: biggestFall > 0
+        ? `From ${biggestFallBefore.toLocaleString()} to ${biggestFallAfter.toLocaleString()}`
+        : undefined,
+    };
+  }
+
+  // --- Slide 4: Captain's Log ---
   const captainPicks = picks.filter((p) => p.is_captain);
   const captainGwCount = new Set(captainPicks.map((p) => p.event)).size;
 
@@ -450,5 +503,14 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     emoji: '🎁',
   };
 
-  return [slide1, slide2, slide3, slide4, slide5, slide6, slide7];
+  return [
+    slide1,
+    slide2,
+    ...(slideRank ? [slideRank] : []),
+    slide3,
+    slide4,
+    slide5,
+    slide6,
+    slide7,
+  ];
 }
