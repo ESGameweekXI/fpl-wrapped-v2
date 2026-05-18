@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import type { WrappedSlide } from '@/lib/wrapped/slides';
 
 interface SlideProps {
@@ -8,7 +8,7 @@ interface SlideProps {
   position: 'active' | 'prev' | 'next';
 }
 
-export default function Slide({ slide, position }: SlideProps) {
+const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, position }, ref) {
   const [copied, setCopied] = useState(false);
 
   const posClass =
@@ -35,7 +35,7 @@ export default function Slide({ slide, position }: SlideProps) {
   }
 
   return (
-    <div className={`wrapped-slide ${posClass}`}>
+    <div ref={ref} className={`wrapped-slide ${posClass}`}>
       {slide.type !== 'split' && slide.type !== 'cta' && slide.emoji && (
         <div className="wrapped-emoji">{slide.emoji}</div>
       )}
@@ -261,4 +261,6 @@ export default function Slide({ slide, position }: SlideProps) {
       )}
     </div>
   );
-}
+});
+
+export default Slide;

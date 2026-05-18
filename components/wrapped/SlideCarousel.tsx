@@ -11,30 +11,86 @@ interface SlideCarouselProps {
   shareData: ShareData;
 }
 
-function buildTweetText(slide: WrappedSlide): string {
-  const suffix = ' @GameweekXI';
-  switch (slide.type) {
-    case 'stat': {
-      const middle = [slide.stat, slide.substat].filter(Boolean).join(' ');
-      return `${slide.headline}: ${middle} — see your FPL Wrapped${suffix}`;
+interface SlideShareButtonProps {
+  cardRef: { current: HTMLDivElement | null };
+  slideId: string;
+  slideHeadline: string;
+}
+
+function SlideShareButton({ cardRef, slideId }: SlideShareButtonProps) {
+  const [sharing, setSharing] = useState(false);
+
+  async function handleShare() {
+    if (!cardRef.current || sharing) return;
+    setSharing(true);
+    try {
+      await document.fonts.ready;
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(cardRef.current, {
+        scale: window.devicePixelRatio || 2,
+        useCORS: true,
+        backgroundColor: null,
+      });
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
+          'image/png'
+        );
+      });
+      const file = new File([blob], `fpl-wrapped-${slideId}.png`, { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          text: 'Check out my FPL Wrapped @GameweekXI',
+          url: window.location.href,
+        });
+      } else {
+        // Fallback: trigger a download
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `fpl-wrapped-${slideId}.png`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } catch {
+      // user cancelled or capture failed — no-op
+    } finally {
+      setSharing(false);
     }
-    case 'split': {
-      const middle = [slide.topStat, slide.topSubstat].filter(Boolean).join(' ');
-      return `${slide.headline}: ${middle} — see your FPL Wrapped${suffix}`;
-    }
-    case 'personality': {
-      const desc = slide.description ?? '';
-      const shortened = desc.length > 80 ? desc.slice(0, 77) + '...' : desc;
-      return `My FPL personality is ${slide.personality} — ${shortened}. See yours:${suffix}`;
-    }
-    default:
-      return `See your FPL Wrapped${suffix}`;
   }
+
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); void handleShare(); }}
+      disabled={sharing}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.35rem',
+        padding: '0 1.1rem',
+        minHeight: '44px',
+        background: 'transparent',
+        border: '1px solid rgba(133, 255, 226, 0.35)',
+        borderRadius: '999px',
+        color: 'var(--brand-text-muted)',
+        fontFamily: 'var(--font-body)',
+        fontSize: '0.8rem',
+        cursor: sharing ? 'default' : 'pointer',
+        opacity: sharing ? 0.6 : 1,
+        whiteSpace: 'nowrap',
+        letterSpacing: '0.02em',
+      }}
+    >
+      <span>↗</span>
+      {sharing ? 'Sharing…' : 'Share slide'}
+    </button>
+  );
 }
 
 export default function SlideCarousel({ slides, shareData }: SlideCarouselProps) {
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const slideRefs = useRef<Array<HTMLDivElement | null>>(Array(slides.length).fill(null));
 
   const goNext = useCallback(() => {
     setCurrent((c) => Math.min(c + 1, slides.length - 1));
@@ -74,6 +130,8 @@ export default function SlideCarousel({ slides, shareData }: SlideCarouselProps)
     x > mid ? goNext() : goPrev();
   };
 
+  const currentSlide = slides[current];
+
   return (
     <div
       className="wrapped-container"
@@ -100,48 +158,33 @@ export default function SlideCarousel({ slides, shareData }: SlideCarouselProps)
         return (
           <Slide
             key={slide.id}
+            ref={(el) => { slideRefs.current[i] = el; }}
             slide={slide}
             position={position}
           />
         );
       })}
 
-      {/* Share on X — shown on every slide except CTA */}
-      {slides[current]?.type !== 'cta' && (() => {
-        const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
-        const text = buildTweetText(slides[current]);
-        const href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
-        return (
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'fixed',
-              bottom: '6.5rem',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.35rem',
-              minHeight: '44px',
-              padding: '0 1.25rem',
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.8rem',
-              color: 'var(--brand-text-muted)',
-              opacity: 0.6,
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              zIndex: 10,
-            }}
-          >
-            <span style={{ fontSize: '0.95rem', lineHeight: 1 }}>𝕏</span>
-            Share on X
-          </a>
-        );
-      })()}
+      {/* Per-slide share button — hidden on CTA */}
+      {currentSlide?.type !== 'cta' && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            bottom: '6.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+          }}
+        >
+          <SlideShareButton
+            key={currentSlide?.id}
+            cardRef={{ current: slideRefs.current[current] }}
+            slideId={currentSlide?.id ?? ''}
+            slideHeadline={currentSlide?.headline ?? ''}
+          />
+        </div>
+      )}
 
       {/* Nav dots */}
       <nav className="wrapped-nav" onClick={(e) => e.stopPropagation()}>
