@@ -25,6 +25,24 @@ export async function syncManager(
   const db = createServerClient();
   const log = (msg: string) => onProgress?.(msg);
 
+  const { data: existing } = await db
+    .from('managers')
+    .select('updated_at')
+    .eq('id', teamId)
+    .single();
+
+  const ageMs = existing?.updated_at
+    ? Date.now() - new Date(existing.updated_at).getTime()
+    : Infinity;
+
+  const STALE_MS = 12 * 60 * 60 * 1000; // 12 hours
+  console.log('[sync] manager', teamId, '| age hours:', Math.round(ageMs / 3600000), '| stale:', ageMs >= STALE_MS);
+
+  if (ageMs < STALE_MS) {
+    log('Data is fresh, skipping sync.');
+    return;
+  }
+
   log('Fetching manager info...');
   const [entryData, historyData, transfersData, bootstrapData] =
     await Promise.all([
@@ -46,8 +64,30 @@ export async function syncManager(
 
   // Sync players — matches: id, web_name, code
   log('Syncing players...');
-  const playerUpserts = (bootstrapData.elements as { id: number; web_name: string; code: number }[])
-    .map((el) => ({ id: el.id, web_name: el.web_name, code: el.code }));
+  const playerUpserts = (bootstrapData.elements as {
+    id: number;
+    web_name: string;
+    first_name: string;
+    second_name: string;
+    element_type: number;
+    team: number;
+    now_cost: number;
+    total_points: number;
+    status: string;
+    code: number;
+  }[]).map((el) => ({
+    id: el.id,
+    web_name: el.web_name,
+    first_name: el.first_name,
+    second_name: el.second_name,
+    element_type: el.element_type,
+    team_id: el.team,
+    now_cost: el.now_cost,
+    total_points: el.total_points,
+    status: el.status,
+    code: el.code,
+    updated_at: new Date().toISOString(),
+  }));
   console.log('[sync] first player code sample:', playerUpserts[0]);
   if (playerUpserts.length > 0) {
     await db.from('players').upsert(playerUpserts, { onConflict: 'id' });
