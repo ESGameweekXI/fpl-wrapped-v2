@@ -24,6 +24,24 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
     const el = getCardEl();
     if (!el || sharing) return;
     setSharing(true);
+
+    // Temporarily inject URL watermark into the slide before capture
+    const watermark = document.createElement('div');
+    watermark.style.cssText = [
+      'position:absolute',
+      'bottom:0.75rem',
+      'left:0',
+      'right:0',
+      'text-align:center',
+      'font-family:Roboto,sans-serif',
+      'font-size:0.65rem',
+      'color:rgba(133,255,226,0.45)',
+      'letter-spacing:0.06em',
+      'pointer-events:none',
+    ].join(';');
+    watermark.textContent = 'season.fpl-wrapped.com';
+    el.appendChild(watermark);
+
     try {
       await document.fonts.ready;
       const html2canvas = (await import('html2canvas')).default;
@@ -32,6 +50,9 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
         useCORS: true,
         backgroundColor: null,
       });
+
+      el.removeChild(watermark);
+
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
           (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
@@ -39,12 +60,9 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
         );
       });
       const file = new File([blob], `fpl-wrapped-${slideId}.png`, { type: 'image/png' });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          text: 'Check out FPL Wrapped',
-          url: window.location.href,
-        });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
       } else {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -53,7 +71,8 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
         URL.revokeObjectURL(a.href);
       }
     } catch {
-      // user cancelled or capture failed — no-op
+      // user cancelled or capture failed — ensure watermark is cleaned up
+      if (el.contains(watermark)) el.removeChild(watermark);
     } finally {
       setSharing(false);
     }
