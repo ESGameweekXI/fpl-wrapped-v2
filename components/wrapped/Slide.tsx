@@ -56,8 +56,33 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
 
   return (
     <div ref={ref} className={`wrapped-slide ${posClass}`}>
-      {slide.type !== 'split' && slide.type !== 'cta' && slide.icon && (
-        <div className="wrapped-emoji"><SlideIcon name={slide.icon} /></div>
+      {slide.type !== 'split' && slide.type !== 'cta' && (
+        slide.playerPhotoUrl ? (
+          <div className="wrapped-emoji">
+            <div style={{
+              width: 'clamp(80px, 20vw, 100px)',
+              height: 'clamp(80px, 20vw, 100px)',
+              borderRadius: '50%',
+              background: 'white',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={slide.playerPhotoUrl}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                }}
+              />
+            </div>
+          </div>
+        ) : slide.icon ? (
+          <div className="wrapped-emoji"><SlideIcon name={slide.icon} /></div>
+        ) : null
       )}
 
       {slide.type !== 'split' && slide.type !== 'cta' && (

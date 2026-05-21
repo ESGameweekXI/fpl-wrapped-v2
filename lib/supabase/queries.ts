@@ -54,6 +54,12 @@ export interface CaptainStatRow {
   minutes: number;
 }
 
+export interface PlayerInfo {
+  name: string;
+  code: number;
+  photoUrl: string; // https://resources.premierleague.com/premierleague/photos/players/110x140/p{code}.png
+}
+
 export interface ManagerData {
   manager: ManagerRow;
   history: HistoryRow[];
@@ -61,7 +67,7 @@ export interface ManagerData {
   transfers: TransferRow[];
   gameweeks: GameweekRow[];
   captainStats: CaptainStatRow[];
-  captainNames: Record<number, string>;
+  captainInfo: Record<number, PlayerInfo>;
   transferStats: CaptainStatRow[];
   transferPlayerNames: Record<number, string>;
   benchStats: CaptainStatRow[];
@@ -193,7 +199,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
           .in('player_id', captainIds)
       : noRows,
     captainIds.length > 0
-      ? db.from('players').select('id, web_name').in('id', captainIds)
+      ? db.from('players').select('id, web_name, code').in('id', captainIds)
       : noRows,
     transferOutIds.length > 0
       ? db
@@ -224,11 +230,18 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     minutes: n(row.minutes),
   }));
 
-  const captainNames: Record<number, string> = Object.fromEntries(
-    ((captainNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => [
-      n(row.id),
-      s(row.web_name),
-    ])
+  const captainInfo: Record<number, PlayerInfo> = Object.fromEntries(
+    ((captainNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => {
+      const code = n(row.code);
+      return [
+        n(row.id),
+        {
+          name: s(row.web_name),
+          code,
+          photoUrl: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${code}.png`,
+        },
+      ];
+    })
   );
 
   const transferStats: CaptainStatRow[] = (
@@ -290,7 +303,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     transfers,
     gameweeks,
     captainStats,
-    captainNames,
+    captainInfo,
     transferStats,
     transferPlayerNames,
     benchStats,

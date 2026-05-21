@@ -11,6 +11,7 @@ export interface WrappedSlide {
   personality?: string;
   earnedStat?: string;
   icon?: string;
+  playerPhotoUrl?: string;
   // split type fields
   topStat?: string;
   topSubstat?: string;
@@ -54,8 +55,6 @@ const FALLBACK_SLIDES: WrappedSlide[] = [
 ];
 
 interface PersonalityParams {
-  captainNames: Record<number, string>;
-  mostCaptainedId: number;
   mostCaptainedCount: number;
   captainGwCount: number;
   totalTransfers: number;
@@ -148,7 +147,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     transfers,
     gameweeks,
     captainStats,
-    captainNames,
+    captainInfo,
     transferStats,
     transferPlayerNames,
     benchStats,
@@ -292,16 +291,21 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   const captainHitRate =
     captainGwCount > 0 ? Math.round((captainHits / captainGwCount) * 100) : 0;
 
+  const mostCaptainedInfo = mostCaptainedId > 0 ? captainInfo[mostCaptainedId] : undefined;
+
   const slide3: WrappedSlide = {
     id: 'captains-log',
     type: 'stat',
     headline: "Captain's Log",
     stat: `${captainHits} of ${captainGwCount} captains hit`,
-    substat: mostCaptainedId > 0
-      ? `Most captained: ${captainNames[mostCaptainedId] ?? `Player #${mostCaptainedId}`}`
+    substat: mostCaptainedInfo
+      ? `Most captained: ${mostCaptainedInfo.name}`
+      : mostCaptainedId > 0
+      ? `Most captained: Player #${mostCaptainedId}`
       : undefined,
     comparison: `${captainHitRate}% hit rate`,
     icon: 'Star',
+    playerPhotoUrl: mostCaptainedInfo?.photoUrl,
   };
 
   // --- Slide 4: Transfer Window ---
@@ -438,8 +442,6 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   // --- Slide 6: FPL Personality ---
   const mostCaptainedCount = captainFreq.get(mostCaptainedId) ?? 0;
   const { personality, description, earnedStat } = derivePersonality({
-    captainNames,
-    mostCaptainedId,
     mostCaptainedCount,
     captainGwCount,
     totalTransfers,

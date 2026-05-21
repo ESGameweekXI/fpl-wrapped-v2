@@ -44,6 +44,14 @@ export async function syncManager(
     updated_at: new Date().toISOString(),
   });
 
+  // Sync players — matches: id, web_name, code
+  log('Syncing players...');
+  const playerUpserts = (bootstrapData.elements as { id: number; web_name: string; code: number }[])
+    .map((el) => ({ id: el.id, web_name: el.web_name, code: el.code }));
+  if (playerUpserts.length > 0) {
+    await db.from('players').upsert(playerUpserts, { onConflict: 'id' });
+  }
+
   // Sync gameweek averages — matches: id, name, deadline_time, finished, is_current, is_next, average_entry_score, updated_at
   log('Syncing gameweek averages...');
   const gameweekUpserts = bootstrapData.events
