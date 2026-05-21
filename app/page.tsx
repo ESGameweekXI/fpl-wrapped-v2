@@ -66,7 +66,7 @@ export default function LandingPage() {
           maxWidth: '22rem',
         }}
       >
-        Your entire FPL season, summarised in 8 slides.
+        Unwrap your FPL season to relive some of its best (and worst) moments.
       </p>
 
       <form
@@ -127,7 +127,7 @@ export default function LandingPage() {
           onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = '0.85')}
           onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.opacity = '1')}
         >
-          See My Wrapped ✨
+          See My Wrapped
         </button>
       </form>
 
