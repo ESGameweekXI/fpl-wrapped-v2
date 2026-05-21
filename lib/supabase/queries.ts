@@ -56,8 +56,15 @@ export interface CaptainStatRow {
 
 export interface PlayerInfo {
   name: string;
-  code: number;
-  photoUrl: string; // https://resources.premierleague.com/premierleague/photos/players/110x140/p{code}.png
+  elementType: number;
+  teamId: number;
+  kitUrl: string;
+}
+
+function buildKitUrl(teamId: number, elementType: number): string {
+  return elementType === 1
+    ? `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamId}_1-66.png`
+    : `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamId}-66.png`;
 }
 
 export interface ManagerData {
@@ -212,7 +219,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
           .in('player_id', captainIds)
       : noRows,
     captainIds.length > 0
-      ? db.from('players').select('id, web_name, code').in('id', captainIds)
+      ? db.from('players').select('id, web_name, element_type, team_id').in('id', captainIds)
       : noRows,
     transferOutIds.length > 0
       ? db
@@ -239,7 +246,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
           .in('player_id', startingPlayerIds)
       : noRows,
     startingPlayerIds.length > 0
-      ? db.from('players').select('id, web_name, code').in('id', startingPlayerIds)
+      ? db.from('players').select('id, web_name, element_type, team_id').in('id', startingPlayerIds)
       : noRows,
   ]);
 
@@ -254,13 +261,15 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
 
   const captainInfo: Record<number, PlayerInfo> = Object.fromEntries(
     ((captainNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => {
-      const code = n(row.code);
+      const elementType = n(row.element_type);
+      const teamId = n(row.team_id);
       return [
         n(row.id),
         {
           name: s(row.web_name),
-          code,
-          photoUrl: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${code}.png`,
+          elementType,
+          teamId,
+          kitUrl: buildKitUrl(teamId, elementType),
         },
       ];
     })
@@ -309,13 +318,15 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
 
   const startingPlayerInfo: Record<number, PlayerInfo> = Object.fromEntries(
     ((startingPlayerInfoRes.data ?? []) as Record<string, unknown>[]).map((row) => {
-      const code = n(row.code);
+      const elementType = n(row.element_type);
+      const teamId = n(row.team_id);
       return [
         n(row.id),
         {
           name: s(row.web_name),
-          code,
-          photoUrl: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${code}.png`,
+          elementType,
+          teamId,
+          kitUrl: buildKitUrl(teamId, elementType),
         },
       ];
     })

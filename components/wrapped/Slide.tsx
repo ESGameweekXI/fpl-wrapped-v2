@@ -73,28 +73,51 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
   return (
     <div ref={ref} className={`wrapped-slide ${posClass}`}>
       {slide.type !== 'split' && slide.type !== 'cta' && (
-        slide.playerPhotoUrl ? (
+        slide.playerKitUrl ? (
           <div className="wrapped-emoji">
-            <div style={{
-              width: 'clamp(80px, 20vw, 100px)',
-              height: 'clamp(80px, 20vw, 100px)',
-              borderRadius: '50%',
-              background: 'white',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              {/* Captain badge */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: 'rgba(2,26,22,0.92)',
+                border: '1.5px solid rgba(255,255,255,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 700,
+                fontSize: '0.6rem',
+                color: 'white',
+                zIndex: 1,
+                lineHeight: 1,
+              }}>C</div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={slide.playerPhotoUrl}
-                alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                src={slide.playerKitUrl}
+                alt={slide.playerName ?? ''}
+                style={{ width: 80, height: 80, objectFit: 'contain', display: 'block' }}
                 onError={(e) => {
                   (e.target as HTMLImageElement).parentElement!.style.display = 'none';
                 }}
               />
             </div>
+            {slide.playerName && (
+              <p style={{
+                margin: '0.4rem 0 0',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.8)',
+                textAlign: 'center',
+                letterSpacing: '0.02em',
+              }}>
+                {slide.playerName}
+              </p>
+            )}
           </div>
         ) : slide.icon ? (
           <div className="wrapped-emoji"><SlideIcon name={slide.icon} /></div>
@@ -154,20 +177,26 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             justifyContent: 'center',
             padding: '0.5rem 1rem',
           }}>
-            {slide.topPhotoUrl && (
-              <div style={{
-                width: 60, height: 60, borderRadius: '50%',
-                background: 'white', overflow: 'hidden',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: '0.4rem', flexShrink: 0,
-              }}>
+            {slide.topKitUrl && (
+              <div style={{ marginBottom: '0.3rem', flexShrink: 0, textAlign: 'center' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={slide.topPhotoUrl}
+                  src={slide.topKitUrl}
                   alt={slide.topPlayerName ?? ''}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: 60, height: 60, objectFit: 'contain', display: 'block', margin: '0 auto' }}
                   onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                 />
+                {slide.topPlayerName && (
+                  <p style={{
+                    margin: '0.25rem 0 0',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.7rem',
+                    color: 'rgba(255,255,255,0.75)',
+                    letterSpacing: '0.02em',
+                  }}>
+                    {slide.topPlayerName}
+                  </p>
+                )}
               </div>
             )}
             {slide.topStat && (
@@ -198,20 +227,26 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             justifyContent: 'center',
             padding: '0.5rem 1rem',
           }}>
-            {slide.bottomPhotoUrl && (
-              <div style={{
-                width: 60, height: 60, borderRadius: '50%',
-                background: 'white', overflow: 'hidden',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: '0.4rem', flexShrink: 0,
-              }}>
+            {slide.bottomKitUrl && (
+              <div style={{ marginBottom: '0.3rem', flexShrink: 0, textAlign: 'center' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={slide.bottomPhotoUrl}
+                  src={slide.bottomKitUrl}
                   alt={slide.bottomPlayerName ?? ''}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: 60, height: 60, objectFit: 'contain', display: 'block', margin: '0 auto' }}
                   onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                 />
+                {slide.bottomPlayerName && (
+                  <p style={{
+                    margin: '0.25rem 0 0',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.7rem',
+                    color: 'rgba(255,255,255,0.75)',
+                    letterSpacing: '0.02em',
+                  }}>
+                    {slide.bottomPlayerName}
+                  </p>
+                )}
               </div>
             )}
             {slide.bottomStat && (

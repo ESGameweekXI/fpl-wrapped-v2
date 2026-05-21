@@ -11,10 +11,11 @@ export interface WrappedSlide {
   personality?: string;
   earnedStat?: string;
   icon?: string;
-  playerPhotoUrl?: string;
-  topPhotoUrl?: string;
+  playerKitUrl?: string;
+  playerName?: string;
+  topKitUrl?: string;
   topPlayerName?: string;
-  bottomPhotoUrl?: string;
+  bottomKitUrl?: string;
   bottomPlayerName?: string;
   // split type fields
   topStat?: string;
@@ -260,9 +261,9 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     bottomComparison: worstGwAvg > 0
       ? `${worstDiff >= 0 ? '+' : ''}${worstDiff} vs GW average`
       : undefined,
-    topPhotoUrl: bestTopInfo?.photoUrl,
+    topKitUrl: bestTopInfo?.kitUrl,
     topPlayerName: bestTopInfo?.name,
-    bottomPhotoUrl: worstBottomInfo?.photoUrl,
+    bottomKitUrl: worstBottomInfo?.kitUrl,
     bottomPlayerName: worstBottomInfo?.name,
   };
 
@@ -353,7 +354,8 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
       : undefined,
     comparison: `${captainHitRate}% hit rate`,
     icon: 'Star',
-    playerPhotoUrl: mostCaptainedInfo?.photoUrl,
+    playerKitUrl: mostCaptainedInfo?.kitUrl,
+    playerName: mostCaptainedInfo?.name,
   };
 
   // --- Slide 4: Transfer Window ---
