@@ -48,6 +48,7 @@ export async function syncManager(
   log('Syncing players...');
   const playerUpserts = (bootstrapData.elements as { id: number; web_name: string; code: number }[])
     .map((el) => ({ id: el.id, web_name: el.web_name, code: el.code }));
+  console.log('[sync] first player code sample:', playerUpserts[0]);
   if (playerUpserts.length > 0) {
     await db.from('players').upsert(playerUpserts, { onConflict: 'id' });
   }
