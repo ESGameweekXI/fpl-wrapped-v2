@@ -10,7 +10,7 @@ export interface WrappedSlide {
   description?: string;
   personality?: string;
   earnedStat?: string;
-  emoji?: string;
+  icon?: string;
   // split type fields
   topStat?: string;
   topSubstat?: string;
@@ -45,13 +45,11 @@ const FALLBACK_SLIDES: WrappedSlide[] = [
     type: 'stat',
     headline: 'No data yet',
     description: 'Your season data is still syncing. Try again in a moment.',
-    emoji: '⏳',
   },
   {
     id: 'thats-a-wrap',
     type: 'cta',
     headline: "That's a Wrap!",
-    emoji: '🎁',
   },
 ];
 
@@ -71,7 +69,6 @@ interface PersonalityParams {
 interface PersonalityResult {
   personality: string;
   description: string;
-  emoji: string;
   earnedStat: string;
 }
 
@@ -90,7 +87,6 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
       personality: 'The Panic Buyer',
       description:
         "The transfer window was your happy place. While others held firm, you were never more than one bad week away from a knee-jerk reaction.",
-      emoji: '🛒',
       earnedStat: `${totalHits} hits taken this season`,
     };
   }
@@ -101,7 +97,6 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
       personality: 'The Loyalist',
       description:
         "You picked your squad and stuck with it. While others were panic buying, you trusted the process all season long.",
-      emoji: '🛡️',
       earnedStat: `Just ${totalTransfers} transfers all season`,
     };
   }
@@ -112,7 +107,6 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
       personality: 'The Unlucky One',
       description:
         "The numbers don't lie — your bench cost you this season. You made good calls, they just didn't land.",
-      emoji: '😤',
       earnedStat: `${fmt(totalBenchPoints)} pts rotting on your bench all season`,
     };
   }
@@ -123,7 +117,6 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
       personality: 'The Entertainer',
       description:
         "Every week was an adventure. Your FPL season was chaotic, expensive, and honestly — kind of fun to watch.",
-      emoji: '🎪',
       earnedStat: `${totalTransfers} transfers, ${totalHits} hits, ${fmt(totalBenchPoints)} bench pts — never a dull week`,
     };
   }
@@ -134,7 +127,6 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
       personality: 'The Optimizer',
       description:
         "Calm, calculated, consistent. You didn't chase the game — you let it come to you.",
-      emoji: '📈',
       earnedStat: `${topPercent(overallRank)} globally with just ${totalTransfers} transfers`,
     };
   }
@@ -144,7 +136,6 @@ function derivePersonality(p: PersonalityParams): PersonalityResult {
     personality: 'The Steady Hand',
     description:
       "Solid, sensible, reliable. You won't win the league on style points — but you're still standing at the end of a long season.",
-    emoji: '⚖️',
     earnedStat: `${fmt(totalPoints)} pts · Rank ${overallRank > 0 ? overallRank.toLocaleString() : '—'}`,
   };
 }
@@ -194,7 +185,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     ]
       .filter(Boolean)
       .join(' · ') || undefined,
-    emoji: '🏆',
+    icon: 'Trophy',
   };
 
   // --- Slide 2: Best & Worst (split) ---
@@ -216,7 +207,6 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     id: 'best-worst',
     type: 'split',
     headline: 'Your Season in Two Moments',
-    emoji: '📊',
     topStat: `${fmt(bestGw.points)} pts`,
     topSubstat: `Your Best — Gameweek ${bestGw.event}`,
     topComparison: bestGwAvg > 0
@@ -268,7 +258,6 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
       id: 'rank-rollercoaster',
       type: 'split',
       headline: 'Your Rank Rollercoaster',
-      emoji: '📈',
       topStat: `▲ ${biggestClimb.toLocaleString()} places`,
       topSubstat: `Biggest climb — Gameweek ${biggestClimbGw}`,
       topComparison: biggestClimb > 0
@@ -312,7 +301,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
       ? `Most captained: ${captainNames[mostCaptainedId] ?? `Player #${mostCaptainedId}`}`
       : undefined,
     comparison: `${captainHitRate}% hit rate`,
-    emoji: '🅲',
+    icon: 'Star',
   };
 
   // --- Slide 4: Transfer Window ---
@@ -386,7 +375,6 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     id: 'transfer-window',
     type: 'split',
     headline: 'Transfer Window',
-    emoji: '🔄',
     topStat: `${totalTransfers} transfers`,
     topSubstat: totalHits > 0 ? `${totalHits} hits — −${totalHitPoints} pts` : 'No hits taken',
     topComparison: totalHits > 0 ? 'Each hit cost 4 pts' : 'Clean sheet all season',
@@ -435,7 +423,6 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     id: 'bench-heartbreak',
     type: 'split',
     headline: 'Bench Heartbreak',
-    emoji: '😢',
     topStat: `${fmt(totalBenchPoints)} pts left on bench all season`,
     topSubstat: `${benchHits} times a benched player scored 4+`,
     topComparison: 'Points you\'ll never get back',
@@ -450,7 +437,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
 
   // --- Slide 6: FPL Personality ---
   const mostCaptainedCount = captainFreq.get(mostCaptainedId) ?? 0;
-  const { personality, description, emoji, earnedStat } = derivePersonality({
+  const { personality, description, earnedStat } = derivePersonality({
     captainNames,
     mostCaptainedId,
     mostCaptainedCount,
@@ -470,7 +457,7 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     personality,
     description,
     earnedStat,
-    emoji,
+    icon: 'User',
   };
 
   // --- Slide 7: That's a Wrap ---
@@ -480,7 +467,6 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     headline: "That's a Wrap!",
     substat: manager.entry_name,
     description: `${fmt(overallRank)} overall rank · ${fmt(totalPoints)} pts`,
-    emoji: '🎁',
   };
 
   return [

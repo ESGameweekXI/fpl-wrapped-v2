@@ -1,7 +1,26 @@
 'use client';
 
-import { useState, forwardRef, type ReactNode } from 'react';
+import { useState, forwardRef, type ReactNode, type ComponentType } from 'react';
+import {
+  Trophy, TrendingUp, ArrowUpDown, Star, ArrowLeftRight, Armchair, User,
+} from 'lucide-react';
 import type { WrappedSlide } from '@/lib/wrapped/slides';
+
+const ICONS: Record<string, ComponentType<{ size?: number | string; color?: string; strokeWidth?: number }>> = {
+  Trophy, TrendingUp, ArrowUpDown, Star, ArrowLeftRight, Armchair, User,
+};
+
+function SlideIcon({ name }: { name: string }) {
+  const Icon = ICONS[name];
+  if (!Icon) return null;
+  return (
+    <Icon
+      size="clamp(2rem, 8vw, 3rem)"
+      color="var(--brand-secondary)"
+      strokeWidth={1.5}
+    />
+  );
+}
 
 interface SlideProps {
   slide: WrappedSlide;
@@ -37,8 +56,8 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
 
   return (
     <div ref={ref} className={`wrapped-slide ${posClass}`}>
-      {slide.type !== 'split' && slide.type !== 'cta' && slide.emoji && (
-        <div className="wrapped-emoji">{slide.emoji}</div>
+      {slide.type !== 'split' && slide.type !== 'cta' && slide.icon && (
+        <div className="wrapped-emoji"><SlideIcon name={slide.icon} /></div>
       )}
 
       {slide.type !== 'split' && slide.type !== 'cta' && (
@@ -68,9 +87,6 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
         }}>
           {/* Header */}
           <div style={{ textAlign: 'center', padding: '0.25rem 0 0.75rem' }}>
-            {slide.emoji && (
-              <span style={{ fontSize: '1.4rem', marginRight: '0.4rem' }}>{slide.emoji}</span>
-            )}
             <h2 className="wrapped-headline" style={{
               fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)',
               display: 'inline',
@@ -180,9 +196,13 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             padding: '1rem 1.5rem 0',
             textAlign: 'center',
           }}>
-            {slide.emoji && (
-              <div className="wrapped-emoji">{slide.emoji}</div>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/gameweek-logo.png"
+              alt="Gameweek XI"
+              style={{ width: 64, height: 64, objectFit: 'contain', marginBottom: '1rem' }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
             <h2 className="wrapped-headline">{slide.headline}</h2>
 
             {slide.substat && (
