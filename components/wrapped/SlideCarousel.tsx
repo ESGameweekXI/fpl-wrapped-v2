@@ -42,15 +42,21 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
     watermark.textContent = 'season.fpl-wrapped.com';
     el.appendChild(watermark);
 
+    // Explicitly set background so html2canvas picks it up
+    const prevBg = el.style.backgroundColor;
+    el.style.backgroundColor = '#021a16';
+
     try {
       await document.fonts.ready;
       const html2canvas = (await import('html2canvas')).default;
       const canvas = await html2canvas(el, {
-        scale: window.devicePixelRatio || 2,
+        scale: 2,
         useCORS: true,
-        backgroundColor: null,
+        allowTaint: false,
+        backgroundColor: '#021a16',
       });
 
+      el.style.backgroundColor = prevBg;
       el.removeChild(watermark);
 
       const blob = await new Promise<Blob>((resolve, reject) => {
@@ -71,7 +77,8 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
         URL.revokeObjectURL(a.href);
       }
     } catch {
-      // user cancelled or capture failed — ensure watermark is cleaned up
+      // user cancelled or capture failed — ensure background and watermark are cleaned up
+      el.style.backgroundColor = prevBg;
       if (el.contains(watermark)) el.removeChild(watermark);
     } finally {
       setSharing(false);
