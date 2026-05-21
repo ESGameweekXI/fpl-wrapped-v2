@@ -14,9 +14,13 @@ export interface WrappedSlide {
   playerKitUrl?: string;
   playerName?: string;
   topKitUrl?: string;
+  topKitLabel?: string;
   topPlayerName?: string;
+  topPlayerPoints?: number;
   bottomKitUrl?: string;
+  bottomKitLabel?: string;
   bottomPlayerName?: string;
+  bottomPlayerPoints?: number;
   // split type fields
   topStat?: string;
   topSubstat?: string;
@@ -262,9 +266,13 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
       ? `${worstDiff >= 0 ? '+' : ''}${worstDiff} vs GW average`
       : undefined,
     topKitUrl: bestTopInfo?.kitUrl,
+    topKitLabel: bestTopInfo ? 'Best player' : undefined,
     topPlayerName: bestTopInfo?.name,
+    topPlayerPoints: bestTopId > 0 && bestTopPts >= 0 ? bestTopPts : undefined,
     bottomKitUrl: worstBottomInfo?.kitUrl,
+    bottomKitLabel: worstBottomInfo ? 'Worst player' : undefined,
     bottomPlayerName: worstBottomInfo?.name,
+    bottomPlayerPoints: worstBottomId > 0 && isFinite(worstBottomPts) ? worstBottomPts : undefined,
   };
 
   // --- Slide 3: Rank Rollercoaster (omitted if < 2 GWs of history) ---

@@ -331,6 +331,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
       ];
     })
   );
+  console.log('[queries] kitUrl samples:', Object.values(startingPlayerInfo).slice(0, 3).map((p) => ({ name: p.name, teamId: p.teamId, elementType: p.elementType, kitUrl: p.kitUrl })));
 
   const transfers: TransferRow[] = ((transfersRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({

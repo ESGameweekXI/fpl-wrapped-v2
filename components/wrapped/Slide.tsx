@@ -179,6 +179,19 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
           }}>
             {slide.topKitUrl && (
               <div style={{ marginBottom: '0.3rem', flexShrink: 0, textAlign: 'center' }}>
+                {slide.topKitLabel && (
+                  <p style={{
+                    margin: '0 0 0.2rem',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    color: 'var(--brand-secondary)',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}>
+                    {slide.topKitLabel}
+                  </p>
+                )}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={slide.topKitUrl}
@@ -195,6 +208,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                     letterSpacing: '0.02em',
                   }}>
                     {slide.topPlayerName}
+                    {slide.topPlayerPoints !== undefined && ` (${slide.topPlayerPoints} pts)`}
                   </p>
                 )}
               </div>
@@ -229,6 +243,19 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
           }}>
             {slide.bottomKitUrl && (
               <div style={{ marginBottom: '0.3rem', flexShrink: 0, textAlign: 'center' }}>
+                {slide.bottomKitLabel && (
+                  <p style={{
+                    margin: '0 0 0.2rem',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.45)',
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}>
+                    {slide.bottomKitLabel}
+                  </p>
+                )}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={slide.bottomKitUrl}
@@ -245,6 +272,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                     letterSpacing: '0.02em',
                   }}>
                     {slide.bottomPlayerName}
+                    {slide.bottomPlayerPoints !== undefined && ` (${slide.bottomPlayerPoints} pts)`}
                   </p>
                 )}
               </div>
