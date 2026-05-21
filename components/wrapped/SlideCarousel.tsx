@@ -54,6 +54,7 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#021a16',
+        ignoreElements: (element) => element.getAttribute('data-html2canvas-ignore') === 'true',
       });
 
       el.style.backgroundColor = prevBg;
@@ -67,7 +68,12 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
       });
       const file = new File([blob], `fpl-wrapped-${slideId}.png`, { type: 'image/png' });
 
-      if (navigator.share && navigator.canShare({ files: [file] })) {
+      const canShareFiles =
+        typeof navigator.share === 'function' &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] });
+
+      if (canShareFiles) {
         await navigator.share({ files: [file] });
       } else {
         const a = document.createElement('a');
@@ -87,6 +93,7 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
 
   return (
     <button
+      data-html2canvas-ignore="true"
       onClick={(e) => { e.stopPropagation(); void handleShare(); }}
       disabled={sharing}
       style={{
