@@ -17,19 +17,33 @@ const roboto = Roboto({
   display: 'swap',
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: 'FPL Wrapped — Your Season in Review',
+  title: 'FPL Wrapped',
   description: 'A fun look back on your FPL season',
-  icons: { icon: '/gameweek-logo.png' },
+  icons: {
+    icon: '/gameweek-logo.png',
+    apple: '/gameweek-logo.png',
+  },
   openGraph: {
     title: 'FPL Wrapped',
     description: 'A fun look back on your FPL season',
-    images: [{ url: '/gameweek-logo.png' }],
+    url: 'https://season.fpl-wrapped.com',
+    siteName: 'FPL Wrapped',
+    images: [
+      {
+        url: 'https://season.fpl-wrapped.com/gameweek-logo.png',
+        width: 512,
+        height: 512,
+        alt: 'Gameweek XI',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'FPL Wrapped',
+    description: 'A fun look back on your FPL season',
+    images: ['https://season.fpl-wrapped.com/gameweek-logo.png'],
   },
 };
 

@@ -43,7 +43,23 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
     const text = 'Check out FPL Wrapped';
     if (navigator.share) {
       try {
-        await navigator.share({ text, url });
+        // Fetch the logo to include as a file so the share sheet shows a preview icon
+        let logoFiles: File[] | undefined;
+        try {
+          const res = await fetch('/gameweek-logo.png');
+          if (res.ok) {
+            const blob = await res.blob();
+            logoFiles = [new File([blob], 'icon.png', { type: 'image/png' })];
+          }
+        } catch {
+          // logo fetch failed — share without it
+        }
+
+        if (logoFiles && navigator.canShare({ files: logoFiles, text, url })) {
+          await navigator.share({ files: logoFiles, text, url });
+        } else {
+          await navigator.share({ text, url });
+        }
       } catch {
         // user cancelled or error — no-op
       }
