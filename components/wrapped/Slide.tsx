@@ -335,7 +335,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                 letterSpacing: '0.02em',
               }}
             >
-              {copied ? 'Link copied!' : '↗ Share Wrapped with Friends'}
+              {copied ? 'Link copied!' : 'Share Wrapped with Friends'}
             </button>
 
             <a
