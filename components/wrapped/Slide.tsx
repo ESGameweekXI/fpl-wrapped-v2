@@ -111,9 +111,11 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
           height: '100%',
         }}>
           {/* Header */}
-          <div style={{ textAlign: 'center', padding: '0.25rem 0 0.75rem' }}>
+          <div style={{ textAlign: 'center', padding: '0.75rem 0 1rem' }}>
             <h2 className="wrapped-headline" style={{
-              fontSize: 'clamp(0.9rem, 2.5vw, 1.2rem)',
+              fontSize: 'clamp(1.1rem, 3.5vw, 1.6rem)',
+              fontWeight: 700,
+              color: 'var(--brand-secondary)',
               display: 'inline',
               verticalAlign: 'middle',
             }}>
