@@ -12,6 +12,10 @@ export interface WrappedSlide {
   earnedStat?: string;
   icon?: string;
   playerPhotoUrl?: string;
+  topPhotoUrl?: string;
+  topPlayerName?: string;
+  bottomPhotoUrl?: string;
+  bottomPlayerName?: string;
   // split type fields
   topStat?: string;
   topSubstat?: string;
@@ -152,6 +156,8 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     transferPlayerNames,
     benchStats,
     benchPlayerNames,
+    startingStats,
+    startingPlayerInfo,
   } = data;
 
   // Guard: if we have no history at all, return a minimal fallback set
@@ -202,6 +208,44 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   const worstGwAvg = avgScoreByGw.get(worstGw.event) ?? 0;
   const worstDiff = (worstGw.points ?? 0) - worstGwAvg;
 
+  // Build per-player-per-event stat lookup for starting XI
+  const startingStatsByKey = new Map<string, { total_points: number; minutes: number }>();
+  for (const stat of startingStats) {
+    startingStatsByKey.set(`${stat.player_id}:${stat.event}`, {
+      total_points: stat.total_points,
+      minutes: stat.minutes,
+    });
+  }
+
+  // Top scorer in the starting XI for best GW
+  const bestGwPicks = picks.filter(
+    (p) => p.event === bestGw.event && p.position >= 1 && p.position <= 11
+  );
+  let bestTopId = 0;
+  let bestTopPts = -1;
+  for (const pick of bestGwPicks) {
+    const pts = startingStatsByKey.get(`${pick.element}:${pick.event}`)?.total_points ?? -1;
+    if (pts > bestTopPts) { bestTopPts = pts; bestTopId = pick.element; }
+  }
+
+  // Lowest scorer (with minutes) in the starting XI for worst GW
+  const worstGwPicks = picks.filter(
+    (p) => p.event === worstGw.event && p.position >= 1 && p.position <= 11
+  );
+  let worstBottomId = 0;
+  let worstBottomPts = Infinity;
+  for (const pick of worstGwPicks) {
+    const stat = startingStatsByKey.get(`${pick.element}:${pick.event}`);
+    if (!stat || stat.minutes === 0) continue;
+    if (stat.total_points < worstBottomPts) {
+      worstBottomPts = stat.total_points;
+      worstBottomId = pick.element;
+    }
+  }
+
+  const bestTopInfo = bestTopId > 0 ? startingPlayerInfo[bestTopId] : undefined;
+  const worstBottomInfo = worstBottomId > 0 ? startingPlayerInfo[worstBottomId] : undefined;
+
   const slide2: WrappedSlide = {
     id: 'best-worst',
     type: 'split',
@@ -216,6 +260,10 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     bottomComparison: worstGwAvg > 0
       ? `${worstDiff >= 0 ? '+' : ''}${worstDiff} vs GW average`
       : undefined,
+    topPhotoUrl: bestTopInfo?.photoUrl,
+    topPlayerName: bestTopInfo?.name,
+    bottomPhotoUrl: worstBottomInfo?.photoUrl,
+    bottomPlayerName: worstBottomInfo?.name,
   };
 
   // --- Slide 3: Rank Rollercoaster (omitted if < 2 GWs of history) ---

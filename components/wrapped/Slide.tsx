@@ -136,6 +136,22 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             justifyContent: 'center',
             padding: '0.5rem 1rem',
           }}>
+            {slide.topPhotoUrl && (
+              <div style={{
+                width: 60, height: 60, borderRadius: '50%',
+                background: 'white', overflow: 'hidden',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: '0.4rem', flexShrink: 0,
+              }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slide.topPhotoUrl}
+                  alt={slide.topPlayerName ?? ''}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                />
+              </div>
+            )}
             {slide.topStat && (
               <div className="wrapped-stat">{slide.topStat}</div>
             )}
@@ -164,6 +180,22 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             justifyContent: 'center',
             padding: '0.5rem 1rem',
           }}>
+            {slide.bottomPhotoUrl && (
+              <div style={{
+                width: 60, height: 60, borderRadius: '50%',
+                background: 'white', overflow: 'hidden',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: '0.4rem', flexShrink: 0,
+              }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slide.bottomPhotoUrl}
+                  alt={slide.bottomPlayerName ?? ''}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                />
+              </div>
+            )}
             {slide.bottomStat && (
               <div className="wrapped-stat" style={{ color: 'rgba(255,255,255,0.65)' }}>
                 {slide.bottomStat}

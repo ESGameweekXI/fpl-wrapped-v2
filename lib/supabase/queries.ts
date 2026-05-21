@@ -72,6 +72,8 @@ export interface ManagerData {
   transferPlayerNames: Record<number, string>;
   benchStats: CaptainStatRow[];
   benchPlayerNames: Record<number, string>;
+  startingStats: CaptainStatRow[];
+  startingPlayerInfo: Record<number, PlayerInfo>;
 }
 
 // Supabase returns null for any column that has no value, even when our
@@ -182,7 +184,16 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     ),
   ];
 
-  // All six secondary queries run in parallel
+  // Starting XI player IDs (positions 1-11)
+  const startingPlayerIds = [
+    ...new Set(
+      rawPicksData
+        .filter((r) => n(r.position) >= 1 && n(r.position) <= 11 && n(r.element) > 0)
+        .map((r) => n(r.element))
+    ),
+  ];
+
+  // All eight secondary queries run in parallel
   const noRows = { data: [], error: null };
   const [
     captainStatsRes,
@@ -191,6 +202,8 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     transferPlayerNamesRes,
     benchStatsRes,
     benchPlayerNamesRes,
+    startingStatsRes,
+    startingPlayerInfoRes,
   ] = await Promise.all([
     captainIds.length > 0
       ? db
@@ -218,6 +231,15 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
       : noRows,
     benchPlayerIds.length > 0
       ? db.from('players').select('id, web_name').in('id', benchPlayerIds)
+      : noRows,
+    startingPlayerIds.length > 0
+      ? db
+          .from('player_gameweek_stats')
+          .select('player_id, event, total_points, minutes')
+          .in('player_id', startingPlayerIds)
+      : noRows,
+    startingPlayerIds.length > 0
+      ? db.from('players').select('id, web_name, code').in('id', startingPlayerIds)
       : noRows,
   ]);
 
@@ -276,6 +298,29 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     ])
   );
 
+  const startingStats: CaptainStatRow[] = (
+    (startingStatsRes.data ?? []) as Record<string, unknown>[]
+  ).map((row) => ({
+    player_id: n(row.player_id),
+    event: n(row.event),
+    total_points: n(row.total_points),
+    minutes: n(row.minutes),
+  }));
+
+  const startingPlayerInfo: Record<number, PlayerInfo> = Object.fromEntries(
+    ((startingPlayerInfoRes.data ?? []) as Record<string, unknown>[]).map((row) => {
+      const code = n(row.code);
+      return [
+        n(row.id),
+        {
+          name: s(row.web_name),
+          code,
+          photoUrl: `https://resources.premierleague.com/premierleague/photos/players/110x140/p${code}.png`,
+        },
+      ];
+    })
+  );
+
   const transfers: TransferRow[] = ((transfersRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({
       manager_id: n(row.manager_id) || teamId,
@@ -308,5 +353,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     transferPlayerNames,
     benchStats,
     benchPlayerNames,
+    startingStats,
+    startingPlayerInfo,
   };
 }
