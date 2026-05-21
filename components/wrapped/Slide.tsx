@@ -21,7 +21,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
 
   async function handleShare() {
     const url = window.location.href;
-    const text = 'Check out my FPL Wrapped — see how your season stacks up 🏆';
+    const text = 'Check out FPL Wrapped';
     if (navigator.share) {
       try {
         await navigator.share({ text, url });
@@ -240,7 +240,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                 letterSpacing: '0.02em',
               }}
             >
-              {copied ? 'Link copied!' : '↗ Share Your Wrapped'}
+              {copied ? 'Link copied!' : '↗ Share Wrapped with Friends'}
             </button>
 
             <a

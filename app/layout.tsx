@@ -17,10 +17,20 @@ const roboto = Roboto({
   display: 'swap',
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'FPL Wrapped — Your Season in Review',
-  description:
-    'A Spotify Wrapped-style experience for FPL managers. See your season stats, best moments, and FPL personality.',
+  description: 'A fun look back on your FPL season',
+  icons: { icon: '/gameweek-logo.png' },
+  openGraph: {
+    title: 'FPL Wrapped',
+    description: 'A fun look back on your FPL season',
+    images: [{ url: '/gameweek-logo.png' }],
+  },
 };
 
 export default function RootLayout({

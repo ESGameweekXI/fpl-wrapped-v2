@@ -42,7 +42,7 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
-          text: 'Check out my FPL Wrapped @GameweekXI',
+          text: 'Check out FPL Wrapped',
           url: window.location.href,
         });
       } else {
