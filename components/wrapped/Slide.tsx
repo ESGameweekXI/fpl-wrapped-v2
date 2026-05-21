@@ -73,53 +73,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
   return (
     <div ref={ref} className={`wrapped-slide ${posClass}`}>
       {slide.type !== 'split' && slide.type !== 'cta' && (
-        slide.playerKitUrl ? (
-          <div className="wrapped-emoji">
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              {/* Captain badge */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                background: 'rgba(2,26,22,0.92)',
-                border: '1.5px solid rgba(255,255,255,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'var(--font-body)',
-                fontWeight: 700,
-                fontSize: '0.6rem',
-                color: 'white',
-                zIndex: 1,
-                lineHeight: 1,
-              }}>C</div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={slide.playerKitUrl}
-                alt={slide.playerName ?? ''}
-                style={{ width: 80, height: 80, objectFit: 'contain', display: 'block' }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                }}
-              />
-            </div>
-            {slide.playerName && (
-              <p style={{
-                margin: '0.4rem 0 0',
-                fontFamily: 'var(--font-body)',
-                fontSize: '0.75rem',
-                color: 'rgba(255,255,255,0.8)',
-                textAlign: 'center',
-                letterSpacing: '0.02em',
-              }}>
-                {slide.playerName}
-              </p>
-            )}
-          </div>
-        ) : slide.icon ? (
+        slide.icon ? (
           <div className="wrapped-emoji"><SlideIcon name={slide.icon} /></div>
         ) : null
       )}
@@ -136,6 +90,52 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
         <>
           {slide.stat && <div className="wrapped-stat">{slide.stat}</div>}
           {slide.substat && <div className="wrapped-substat">{slide.substat}</div>}
+          {slide.playerKitUrl && (
+            <div style={{ margin: '0.75rem 0 0.25rem', textAlign: 'center' }}>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                {/* Captain badge */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: 'rgba(2,26,22,0.92)',
+                  border: '1.5px solid rgba(255,255,255,0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: 700,
+                  fontSize: '0.55rem',
+                  color: 'white',
+                  zIndex: 1,
+                  lineHeight: 1,
+                }}>C</div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slide.playerKitUrl}
+                  alt={slide.playerName ?? ''}
+                  style={{ width: 60, height: 60, objectFit: 'contain', display: 'block' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+                  }}
+                />
+              </div>
+              {slide.playerName && (
+                <p style={{
+                  margin: '0.25rem 0 0',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.7rem',
+                  color: 'rgba(255,255,255,0.75)',
+                  letterSpacing: '0.02em',
+                }}>
+                  {slide.playerName}
+                </p>
+              )}
+            </div>
+          )}
           {slide.comparison && (
             <p className="wrapped-comparison">{slide.comparison}</p>
           )}

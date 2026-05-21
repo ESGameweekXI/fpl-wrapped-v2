@@ -274,6 +274,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
       ];
     })
   );
+  console.log('[queries] captainInfo samples:', Object.values(captainInfo).slice(0, 3).map((p) => ({ name: p.name, teamId: p.teamId, elementType: p.elementType, kitUrl: p.kitUrl })));
 
   const transferStats: CaptainStatRow[] = (
     (transferStatsRes.data ?? []) as Record<string, unknown>[]
