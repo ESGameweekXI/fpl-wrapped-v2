@@ -215,8 +215,6 @@ export default function SlideCarousel({ slides, shareData }: SlideCarouselProps)
         ))}
       </nav>
 
-      <p className="wrapped-tap-hint">Tap to advance</p>
-
       {/* Hidden share card for html2canvas */}
       <ShareCard shareData={shareData} personality={shareData.personality} />
     </div>
