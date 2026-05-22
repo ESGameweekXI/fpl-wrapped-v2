@@ -40,33 +40,34 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
 
   async function handleShare() {
     const url = window.location.href;
-    const text = 'Check out FPL Wrapped';
     if (navigator.share) {
       try {
-        // Fetch the logo to include as a file so the share sheet shows a preview icon
-        let logoFiles: File[] | undefined;
-        try {
-          const res = await fetch('/gameweek-logo.png');
-          if (res.ok) {
-            const blob = await res.blob();
-            logoFiles = [new File([blob], 'icon.png', { type: 'image/png' })];
-          }
-        } catch {
-          // logo fetch failed — share without it
-        }
-
-        if (logoFiles && navigator.canShare({ files: logoFiles, text, url })) {
-          await navigator.share({ files: logoFiles, text, url });
-        } else {
-          await navigator.share({ text, url });
-        }
+        await navigator.share({
+          title: 'FPL Wrapped',
+          text: 'Check out FPL Wrapped — a fun look back on your FPL season',
+          url,
+        });
       } catch {
         // user cancelled or error — no-op
       }
-    } else {
-      await navigator.clipboard.writeText(url);
+      return;
+    }
+    // Copy fallback
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const el = document.createElement('textarea');
+        el.value = url;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // copy failed silently
     }
   }
 
