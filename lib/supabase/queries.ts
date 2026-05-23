@@ -61,10 +61,10 @@ export interface PlayerInfo {
   kitUrl: string;
 }
 
-function buildKitUrl(teamId: number, elementType: number): string {
+function buildKitUrl(teamCode: number, elementType: number): string {
   return elementType === 1
-    ? `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamId}_1-66.png`
-    : `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamId}-66.png`;
+    ? `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamCode}_1-66.png`
+    : `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${teamCode}-66.png`;
 }
 
 export interface ManagerData {
@@ -96,7 +96,7 @@ function s(val: unknown, fallback = ''): string {
 export async function getManagerData(teamId: number): Promise<ManagerData | null> {
   const db = createServerClient();
 
-  const [managerRes, historyRes, picksRes, transfersRes, gameweeksRes] =
+  const [managerRes, historyRes, picksRes, transfersRes, gameweeksRes, teamsRes] =
     await Promise.all([
       db.from('managers').select('*').eq('id', teamId).single(),
       db
@@ -119,9 +119,16 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
         .select('id, name, average_entry_score')
         .eq('finished', true)
         .order('id', { ascending: true }),
+      db.from('teams').select('id, code'),
     ]);
 
   if (managerRes.error || !managerRes.data) return null;
+
+  // Build team_id → team_code lookup
+  const teamCodeMap: Record<number, number> = Object.fromEntries(
+    ((teamsRes.data ?? []) as Record<string, unknown>[]).map((row) => [n(row.id), n(row.code)])
+  );
+  console.log('[queries] teamCodeMap sample:', Object.entries(teamCodeMap).slice(0, 5));
 
   // Normalise history rows first so we can derive season totals for the manager row
   const history: HistoryRow[] = ((historyRes.data ?? []) as Record<string, unknown>[]).map(
@@ -260,13 +267,13 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
   }));
 
   const captainRawRows = (captainNamesRes.data ?? []) as Record<string, unknown>[];
-  console.log('[queries] captainRawRows:', captainRawRows.map((row) => ({ id: row.id, web_name: row.web_name, team_id: row.team_id, element_type: row.element_type })));
   const captainInfo: Record<number, PlayerInfo> = Object.fromEntries(
     captainRawRows.map((row) => {
       const elementType = n(row.element_type);
       const teamId = n(row.team_id);
-      const kitUrl = buildKitUrl(teamId, elementType);
-      console.log('[queries] captain kitUrl:', { id: row.id, web_name: row.web_name, team_id: row.team_id, element_type: row.element_type, teamId, elementType, kitUrl });
+      const teamCode = teamCodeMap[teamId] ?? 0;
+      const kitUrl = buildKitUrl(teamCode, elementType);
+      console.log('[queries] captain kitUrl:', { id: row.id, web_name: row.web_name, team_id: row.team_id, teamCode, elementType, kitUrl });
       return [
         n(row.id),
         {
@@ -324,18 +331,20 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     ((startingPlayerInfoRes.data ?? []) as Record<string, unknown>[]).map((row) => {
       const elementType = n(row.element_type);
       const teamId = n(row.team_id);
+      const teamCode = teamCodeMap[teamId] ?? 0;
+      const kitUrl = buildKitUrl(teamCode, elementType);
       return [
         n(row.id),
         {
           name: s(row.web_name),
           elementType,
           teamId,
-          kitUrl: buildKitUrl(teamId, elementType),
+          kitUrl,
         },
       ];
     })
   );
-  console.log('[queries] kitUrl samples:', Object.values(startingPlayerInfo).slice(0, 3).map((p) => ({ name: p.name, teamId: p.teamId, elementType: p.elementType, kitUrl: p.kitUrl })));
+  console.log('[queries] startingPlayerInfo samples:', Object.values(startingPlayerInfo).slice(0, 3).map((p) => ({ name: p.name, teamId: p.teamId, elementType: p.elementType, kitUrl: p.kitUrl })));
 
   const transfers: TransferRow[] = ((transfersRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({

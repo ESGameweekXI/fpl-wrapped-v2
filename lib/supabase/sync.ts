@@ -35,7 +35,7 @@ export async function syncManager(
     ? Date.now() - new Date(existing.updated_at).getTime()
     : Infinity;
 
-  const STALE_MS = 12 * 60 * 60 * 1000; // 12 hours
+  const STALE_MS = 0; // force re-sync until kit URLs are confirmed correct — restore to 12 * 60 * 60 * 1000
   console.log('[sync] manager', teamId, '| age hours:', Math.round(ageMs / 3600000), '| stale:', ageMs >= STALE_MS);
 
   if (ageMs < STALE_MS) {
@@ -91,6 +91,19 @@ export async function syncManager(
   console.log('[sync] first player code sample:', playerUpserts[0]);
   if (playerUpserts.length > 0) {
     await db.from('players').upsert(playerUpserts, { onConflict: 'id' });
+  }
+
+  // Sync teams — matches: id, name, short_name, code
+  log('Syncing teams...');
+  const teamUpserts = bootstrapData.teams.map((t: { id: number; name: string; short_name: string; code: number }) => ({
+    id: t.id,
+    name: t.name,
+    short_name: t.short_name,
+    code: t.code,
+    updated_at: new Date().toISOString(),
+  }));
+  if (teamUpserts.length > 0) {
+    await db.from('teams').upsert(teamUpserts, { onConflict: 'id' });
   }
 
   // Sync gameweek averages — matches: id, name, deadline_time, finished, is_current, is_next, average_entry_score, updated_at
