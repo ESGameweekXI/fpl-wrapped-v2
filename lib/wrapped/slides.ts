@@ -158,9 +158,9 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     captainStats,
     captainInfo,
     transferStats,
-    transferPlayerNames,
+    transferPlayerInfo,
     benchStats,
-    benchPlayerNames,
+    benchPlayerInfo,
     startingStats,
     startingPlayerInfo,
   } = data;
@@ -429,8 +429,9 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   }
 
   const hasRegret = regretPlayerId > 0 && regretPoints > 0;
+  const regretInfo = hasRegret ? transferPlayerInfo[regretPlayerId] : undefined;
   const regretName = hasRegret
-    ? (transferPlayerNames[regretPlayerId] ?? `Player #${regretPlayerId}`)
+    ? (regretInfo?.name ?? `Player #${regretPlayerId}`)
     : null;
 
   const slide4: WrappedSlide = {
@@ -443,6 +444,8 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     bottomStat: hasRegret ? `${fmt(regretPoints)} pts after you sold them` : 'No regrets',
     bottomSubstat: hasRegret && regretName ? `Biggest Regret: ${regretName}` : undefined,
     bottomComparison: hasRegret ? `Sold in GW${regretSaleGw} and never bought back` : undefined,
+    bottomKitUrl: regretInfo?.kitUrl,
+    bottomPlayerName: regretInfo?.name,
   };
 
   // --- Slide 5: Bench Heartbreak ---
@@ -477,8 +480,9 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
   }
 
   const hasBenchWaste = biggestWasteId > 0 && biggestWastePts > 0;
+  const benchWasteInfo = hasBenchWaste ? benchPlayerInfo[biggestWasteId] : undefined;
   const biggestWasteName = hasBenchWaste
-    ? (benchPlayerNames[biggestWasteId] ?? `Player #${biggestWasteId}`)
+    ? (benchWasteInfo?.name ?? `Player #${biggestWasteId}`)
     : null;
 
   const slide5: WrappedSlide = {
@@ -495,6 +499,8 @@ export function computeSlides(data: ManagerData): WrappedSlide[] {
     bottomComparison: hasBenchWaste
       ? `Scored ${fmt(biggestWastePts)} pts while sitting on your bench`
       : undefined,
+    bottomKitUrl: benchWasteInfo?.kitUrl,
+    bottomPlayerName: benchWasteInfo?.name,
   };
 
   // --- Slide 6: FPL Personality ---

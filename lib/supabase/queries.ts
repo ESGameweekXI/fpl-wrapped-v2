@@ -76,9 +76,9 @@ export interface ManagerData {
   captainStats: CaptainStatRow[];
   captainInfo: Record<number, PlayerInfo>;
   transferStats: CaptainStatRow[];
-  transferPlayerNames: Record<number, string>;
+  transferPlayerInfo: Record<number, PlayerInfo>;
   benchStats: CaptainStatRow[];
-  benchPlayerNames: Record<number, string>;
+  benchPlayerInfo: Record<number, PlayerInfo>;
   startingStats: CaptainStatRow[];
   startingPlayerInfo: Record<number, PlayerInfo>;
 }
@@ -235,7 +235,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
           .in('player_id', transferOutIds)
       : noRows,
     transferAllIds.length > 0
-      ? db.from('players').select('id, web_name').in('id', transferAllIds)
+      ? db.from('players').select('id, web_name, element_type, team_id').in('id', transferAllIds)
       : noRows,
     benchPlayerIds.length > 0
       ? db
@@ -244,7 +244,7 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
           .in('player_id', benchPlayerIds)
       : noRows,
     benchPlayerIds.length > 0
-      ? db.from('players').select('id, web_name').in('id', benchPlayerIds)
+      ? db.from('players').select('id, web_name, element_type, team_id').in('id', benchPlayerIds)
       : noRows,
     startingPlayerIds.length > 0
       ? db
@@ -295,11 +295,16 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     minutes: n(row.minutes),
   }));
 
-  const transferPlayerNames: Record<number, string> = Object.fromEntries(
-    ((transferPlayerNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => [
-      n(row.id),
-      s(row.web_name),
-    ])
+  const transferPlayerInfo: Record<number, PlayerInfo> = Object.fromEntries(
+    ((transferPlayerNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => {
+      const elementType = n(row.element_type);
+      const rowTeamId = n(row.team_id);
+      const teamCode = teamCodeMap[rowTeamId] ?? 0;
+      return [
+        n(row.id),
+        { name: s(row.web_name), elementType, teamId: rowTeamId, kitUrl: buildKitUrl(teamCode, elementType) },
+      ];
+    })
   );
 
   const benchStats: CaptainStatRow[] = (
@@ -311,11 +316,16 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     minutes: n(row.minutes),
   }));
 
-  const benchPlayerNames: Record<number, string> = Object.fromEntries(
-    ((benchPlayerNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => [
-      n(row.id),
-      s(row.web_name),
-    ])
+  const benchPlayerInfo: Record<number, PlayerInfo> = Object.fromEntries(
+    ((benchPlayerNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => {
+      const elementType = n(row.element_type);
+      const rowTeamId = n(row.team_id);
+      const teamCode = teamCodeMap[rowTeamId] ?? 0;
+      return [
+        n(row.id),
+        { name: s(row.web_name), elementType, teamId: rowTeamId, kitUrl: buildKitUrl(teamCode, elementType) },
+      ];
+    })
   );
 
   const startingStats: CaptainStatRow[] = (
@@ -375,9 +385,9 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     captainStats,
     captainInfo,
     transferStats,
-    transferPlayerNames,
+    transferPlayerInfo,
     benchStats,
-    benchPlayerNames,
+    benchPlayerInfo,
     startingStats,
     startingPlayerInfo,
   };

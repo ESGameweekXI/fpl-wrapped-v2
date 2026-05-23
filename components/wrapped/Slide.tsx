@@ -83,7 +83,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
       )}
 
       {slide.type !== 'split' && slide.type !== 'cta' && (
-        <h2 className="wrapped-headline" style={isKitSlide ? { fontSize: 'clamp(1rem, 3vw, 1.4rem)', fontWeight: 700, marginBottom: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.headline}</h2>
+        <h2 className="wrapped-headline" style={isKitSlide ? { fontSize: 'clamp(1rem, 3vw, 1.4rem)', fontWeight: 700, marginBottom: 'clamp(4px, 1.2vh, 12px)' } : { fontSize: 'clamp(1.1rem, 3.5vw, 1.6rem)' }}>{slide.headline}</h2>
       )}
 
       {slide.type !== 'split' && slide.type !== 'cta' && shareButton && (
@@ -92,8 +92,8 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
 
       {slide.type === 'stat' && (
         <>
-          {slide.stat && <div className="wrapped-stat" style={isKitSlide ? { fontSize: 'clamp(1.6rem, 5.5vw, 3rem)', marginBottom: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.stat}</div>}
-          {slide.substat && <div className="wrapped-substat" style={isKitSlide ? { fontSize: 'clamp(0.85rem, 2.5vw, 1.2rem)', marginBottom: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.substat}</div>}
+          {slide.stat && <div className="wrapped-stat" style={isKitSlide ? { fontSize: 'clamp(1.6rem, 5.5vw, 3rem)', marginBottom: 'clamp(4px, 1.2vh, 12px)' } : { fontSize: 'clamp(2.5rem, 9vw, 5rem)' }}>{slide.stat}</div>}
+          {slide.substat && <div className="wrapped-substat" style={isKitSlide ? { fontSize: 'clamp(0.85rem, 2.5vw, 1.2rem)', marginBottom: 'clamp(4px, 1.2vh, 12px)' } : { fontSize: 'clamp(0.95rem, 3vw, 1.4rem)' }}>{slide.substat}</div>}
           {slide.playerKitUrl && (
             <div style={{ margin: 'clamp(4px, 1.2vh, 12px) 0', textAlign: 'center' }}>
               <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -141,7 +141,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             </div>
           )}
           {slide.comparison && (
-            <p className="wrapped-comparison" style={isKitSlide ? { fontSize: 'clamp(0.8rem, 2vw, 1rem)', marginTop: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.comparison}</p>
+            <p className="wrapped-comparison" style={isKitSlide ? { fontSize: 'clamp(0.8rem, 2vw, 1rem)', marginTop: 'clamp(4px, 1.2vh, 12px)' } : { fontSize: 'clamp(0.85rem, 2.5vw, 1.1rem)' }}>{slide.comparison}</p>
           )}
         </>
       )}
@@ -156,7 +156,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
           {/* Header */}
           <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
             <h2 className="wrapped-headline" style={{
-              fontSize: 'clamp(1.1rem, 3.5vw, 1.6rem)',
+              fontSize: 'clamp(1rem, 3vw, 1.4rem)',
               fontWeight: 700,
               color: 'var(--brand-secondary)',
               display: 'inline',
@@ -184,7 +184,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             overflow: 'hidden',
           }}>
             {slide.topKitUrl && (
-              <div style={{ marginBottom: '0.1rem', flexShrink: 0, textAlign: 'center' }}>
+              <div style={{ marginBottom: 'clamp(4px, 1vh, 10px)', flexShrink: 0, textAlign: 'center' }}>
                 {slide.topKitLabel && (
                   <p style={{
                     margin: '0 0 0.1rem',
@@ -202,14 +202,14 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                 <img
                   src={slide.topKitUrl}
                   alt={slide.topPlayerName ?? ''}
-                  style={{ width: 80, height: 80, objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                  style={{ width: 70, height: 70, objectFit: 'contain', display: 'block', margin: '0 auto' }}
                   onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                 />
                 {slide.topPlayerName && (
                   <p style={{
                     margin: '0.1rem 0 0',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '0.7rem',
+                    fontSize: 'clamp(0.8rem, 2.2vw, 1rem)',
                     color: 'rgba(255,255,255,0.75)',
                     letterSpacing: '0.02em',
                   }}>
@@ -220,13 +220,13 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
               </div>
             )}
             {slide.topStat && (
-              <div className="wrapped-stat" style={{ fontSize: 'clamp(3rem, 14vw, 7rem)' }}>{slide.topStat}</div>
+              <div className="wrapped-stat" style={{ fontSize: 'clamp(2.2rem, 8vw, 4.5rem)' }}>{slide.topStat}</div>
             )}
             {slide.topSubstat && (
-              <div className="wrapped-substat">{slide.topSubstat}</div>
+              <div className="wrapped-substat" style={{ fontSize: 'clamp(0.9rem, 2.8vw, 1.3rem)' }}>{slide.topSubstat}</div>
             )}
             {slide.topComparison && (
-              <p className="wrapped-comparison">{slide.topComparison}</p>
+              <p className="wrapped-comparison" style={{ fontSize: 'clamp(0.8rem, 2.2vw, 1rem)' }}>{slide.topComparison}</p>
             )}
           </div>
 
@@ -251,7 +251,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             overflow: 'hidden',
           }}>
             {slide.bottomKitUrl && (
-              <div style={{ marginBottom: '0.1rem', flexShrink: 0, textAlign: 'center' }}>
+              <div style={{ marginBottom: 'clamp(4px, 1vh, 10px)', flexShrink: 0, textAlign: 'center' }}>
                 {slide.bottomKitLabel && (
                   <p style={{
                     margin: '0 0 0.1rem',
@@ -269,14 +269,14 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                 <img
                   src={slide.bottomKitUrl}
                   alt={slide.bottomPlayerName ?? ''}
-                  style={{ width: 80, height: 80, objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                  style={{ width: 70, height: 70, objectFit: 'contain', display: 'block', margin: '0 auto' }}
                   onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                 />
                 {slide.bottomPlayerName && (
                   <p style={{
                     margin: '0.1rem 0 0',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '0.7rem',
+                    fontSize: 'clamp(0.8rem, 2.2vw, 1rem)',
                     color: 'rgba(255,255,255,0.75)',
                     letterSpacing: '0.02em',
                   }}>
@@ -287,15 +287,15 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
               </div>
             )}
             {slide.bottomStat && (
-              <div className="wrapped-stat" style={{ fontSize: 'clamp(3rem, 14vw, 7rem)', color: 'rgba(255,255,255,0.65)' }}>
+              <div className="wrapped-stat" style={{ fontSize: 'clamp(2.2rem, 8vw, 4.5rem)', color: 'rgba(255,255,255,0.65)' }}>
                 {slide.bottomStat}
               </div>
             )}
             {slide.bottomSubstat && (
-              <div className="wrapped-substat">{slide.bottomSubstat}</div>
+              <div className="wrapped-substat" style={{ fontSize: 'clamp(0.9rem, 2.8vw, 1.3rem)' }}>{slide.bottomSubstat}</div>
             )}
             {slide.bottomComparison && (
-              <p className="wrapped-comparison">{slide.bottomComparison}</p>
+              <p className="wrapped-comparison" style={{ fontSize: 'clamp(0.8rem, 2.2vw, 1rem)' }}>{slide.bottomComparison}</p>
             )}
           </div>
         </div>
@@ -303,16 +303,16 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
 
       {slide.type === 'personality' && (
         <>
-          <div className="wrapped-personality">{slide.personality}</div>
+          <div className="wrapped-personality" style={{ fontSize: 'clamp(1.8rem, 7vw, 3.5rem)' }}>{slide.personality}</div>
           {slide.description && (
-            <p className="wrapped-description">{slide.description}</p>
+            <p className="wrapped-description" style={{ fontSize: 'clamp(0.9rem, 2.8vw, 1.3rem)', marginTop: 'clamp(8px, 2vh, 20px)' }}>{slide.description}</p>
           )}
           {slide.earnedStat && (
             <p style={{
-              marginTop: '1.5rem',
+              marginTop: 'clamp(8px, 2vh, 20px)',
               fontFamily: 'var(--font-body)',
               fontStyle: 'italic',
-              fontSize: 'clamp(0.75rem, 2vw, 0.9rem)',
+              fontSize: 'clamp(0.8rem, 2.2vw, 1rem)',
               color: 'var(--brand-secondary)',
               opacity: 0.75,
               letterSpacing: '0.03em',
