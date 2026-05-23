@@ -163,6 +163,12 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             </h2>
           </div>
 
+          {shareButton && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '0.25rem 0' }}>
+              {shareButton}
+            </div>
+          )}
+
           {/* Top half — best */}
           <div style={{
             flex: 1,
