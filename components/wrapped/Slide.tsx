@@ -38,6 +38,9 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
       ? 'wrapped-slide--prev'
       : 'wrapped-slide--next';
 
+  // Captain's Log slide — kit card layout needs tighter proportions
+  const isKitSlide = slide.type === 'stat' && !!slide.playerKitUrl;
+
   async function handleShare() {
     const url = window.location.href;
     if (navigator.share) {
@@ -80,19 +83,19 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
       )}
 
       {slide.type !== 'split' && slide.type !== 'cta' && (
-        <h2 className="wrapped-headline">{slide.headline}</h2>
+        <h2 className="wrapped-headline" style={isKitSlide ? { fontSize: 'clamp(1rem, 3vw, 1.4rem)', fontWeight: 700, marginBottom: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.headline}</h2>
       )}
 
       {slide.type !== 'split' && slide.type !== 'cta' && shareButton && (
-        <div style={{ marginBottom: '0.5rem' }}>{shareButton}</div>
+        <div style={{ marginBottom: isKitSlide ? 'clamp(4px, 1.2vh, 12px)' : '0.5rem' }}>{shareButton}</div>
       )}
 
       {slide.type === 'stat' && (
         <>
-          {slide.stat && <div className="wrapped-stat">{slide.stat}</div>}
-          {slide.substat && <div className="wrapped-substat">{slide.substat}</div>}
+          {slide.stat && <div className="wrapped-stat" style={isKitSlide ? { fontSize: 'clamp(1.6rem, 5.5vw, 3rem)', marginBottom: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.stat}</div>}
+          {slide.substat && <div className="wrapped-substat" style={isKitSlide ? { fontSize: 'clamp(0.85rem, 2.5vw, 1.2rem)', marginBottom: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.substat}</div>}
           {slide.playerKitUrl && (
-            <div style={{ margin: '0.75rem 0 0.25rem', textAlign: 'center' }}>
+            <div style={{ margin: 'clamp(4px, 1.2vh, 12px) 0', textAlign: 'center' }}>
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 {/* Captain badge */}
                 <div style={{
@@ -118,7 +121,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                 <img
                   src={slide.playerKitUrl}
                   alt={slide.playerName ?? ''}
-                  style={{ width: 60, height: 60, objectFit: 'contain', display: 'block' }}
+                  style={{ width: 90, height: 90, objectFit: 'contain', display: 'block' }}
                   onError={(e) => {
                     (e.target as HTMLImageElement).parentElement!.style.display = 'none';
                   }}
@@ -126,9 +129,9 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
               </div>
               {slide.playerName && (
                 <p style={{
-                  margin: '0.25rem 0 0',
+                  margin: 'clamp(4px, 1.2vh, 12px) 0 0',
                   fontFamily: 'var(--font-body)',
-                  fontSize: '0.7rem',
+                  fontSize: 'clamp(0.85rem, 2.5vw, 1.1rem)',
                   color: 'rgba(255,255,255,0.75)',
                   letterSpacing: '0.02em',
                 }}>
@@ -138,7 +141,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             </div>
           )}
           {slide.comparison && (
-            <p className="wrapped-comparison">{slide.comparison}</p>
+            <p className="wrapped-comparison" style={isKitSlide ? { fontSize: 'clamp(0.8rem, 2vw, 1rem)', marginTop: 'clamp(4px, 1.2vh, 12px)' } : undefined}>{slide.comparison}</p>
           )}
         </>
       )}
