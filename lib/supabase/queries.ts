@@ -259,22 +259,25 @@ export async function getManagerData(teamId: number): Promise<ManagerData | null
     minutes: n(row.minutes),
   }));
 
+  const captainRawRows = (captainNamesRes.data ?? []) as Record<string, unknown>[];
+  console.log('[queries] captainRawRows:', captainRawRows.map((row) => ({ id: row.id, web_name: row.web_name, team_id: row.team_id, element_type: row.element_type })));
   const captainInfo: Record<number, PlayerInfo> = Object.fromEntries(
-    ((captainNamesRes.data ?? []) as Record<string, unknown>[]).map((row) => {
+    captainRawRows.map((row) => {
       const elementType = n(row.element_type);
       const teamId = n(row.team_id);
+      const kitUrl = buildKitUrl(teamId, elementType);
+      console.log('[queries] captain kitUrl:', { id: row.id, web_name: row.web_name, team_id: row.team_id, element_type: row.element_type, teamId, elementType, kitUrl });
       return [
         n(row.id),
         {
           name: s(row.web_name),
           elementType,
           teamId,
-          kitUrl: buildKitUrl(teamId, elementType),
+          kitUrl,
         },
       ];
     })
   );
-  console.log('[queries] captainInfo samples:', Object.values(captainInfo).slice(0, 3).map((p) => ({ name: p.name, teamId: p.teamId, elementType: p.elementType, kitUrl: p.kitUrl })));
 
   const transferStats: CaptainStatRow[] = (
     (transferStatsRes.data ?? []) as Record<string, unknown>[]
