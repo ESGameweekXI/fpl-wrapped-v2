@@ -151,7 +151,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
           height: '100%',
         }}>
           {/* Header */}
-          <div style={{ textAlign: 'center', padding: '0.75rem 0 1rem' }}>
+          <div style={{ textAlign: 'center', padding: '0.5rem 0' }}>
             <h2 className="wrapped-headline" style={{
               fontSize: 'clamp(1.1rem, 3.5vw, 1.6rem)',
               fontWeight: 700,
@@ -163,12 +163,6 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             </h2>
           </div>
 
-          {shareButton && (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '0.25rem 0' }}>
-              {shareButton}
-            </div>
-          )}
-
           {/* Top half — best */}
           <div style={{
             flex: 1,
@@ -176,18 +170,20 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '0.5rem 1rem',
+            padding: '0.25rem 1rem',
+            minHeight: 0,
+            overflow: 'hidden',
           }}>
             {slide.topKitUrl && (
-              <div style={{ marginBottom: '0.3rem', flexShrink: 0, textAlign: 'center' }}>
+              <div style={{ marginBottom: '0.1rem', flexShrink: 0, textAlign: 'center' }}>
                 {slide.topKitLabel && (
                   <p style={{
-                    margin: '0 0 0.2rem',
+                    margin: '0 0 0.1rem',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '0.65rem',
+                    fontSize: '0.6rem',
                     fontWeight: 600,
                     color: 'var(--brand-secondary)',
-                    letterSpacing: '0.06em',
+                    letterSpacing: '0.07em',
                     textTransform: 'uppercase',
                   }}>
                     {slide.topKitLabel}
@@ -197,12 +193,12 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                 <img
                   src={slide.topKitUrl}
                   alt={slide.topPlayerName ?? ''}
-                  style={{ width: 60, height: 60, objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                  style={{ width: 80, height: 80, objectFit: 'contain', display: 'block', margin: '0 auto' }}
                   onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                 />
                 {slide.topPlayerName && (
                   <p style={{
-                    margin: '0.25rem 0 0',
+                    margin: '0.1rem 0 0',
                     fontFamily: 'var(--font-body)',
                     fontSize: '0.7rem',
                     color: 'rgba(255,255,255,0.75)',
@@ -215,7 +211,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
               </div>
             )}
             {slide.topStat && (
-              <div className="wrapped-stat">{slide.topStat}</div>
+              <div className="wrapped-stat" style={{ fontSize: 'clamp(3rem, 14vw, 7rem)' }}>{slide.topStat}</div>
             )}
             {slide.topSubstat && (
               <div className="wrapped-substat">{slide.topSubstat}</div>
@@ -231,6 +227,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             borderTop: '1px solid rgba(0,255,194,0.2)',
             margin: '0',
             width: '100%',
+            flexShrink: 0,
           }} />
 
           {/* Bottom half — worst */}
@@ -240,18 +237,20 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '0.5rem 1rem',
+            padding: '0.5rem 1rem 0.5rem',
+            minHeight: 0,
+            overflow: 'hidden',
           }}>
             {slide.bottomKitUrl && (
-              <div style={{ marginBottom: '0.3rem', flexShrink: 0, textAlign: 'center' }}>
+              <div style={{ marginBottom: '0.1rem', flexShrink: 0, textAlign: 'center' }}>
                 {slide.bottomKitLabel && (
                   <p style={{
-                    margin: '0 0 0.2rem',
+                    margin: '0 0 0.1rem',
                     fontFamily: 'var(--font-body)',
-                    fontSize: '0.65rem',
+                    fontSize: '0.6rem',
                     fontWeight: 600,
-                    color: 'rgba(255,255,255,0.45)',
-                    letterSpacing: '0.06em',
+                    color: 'var(--brand-secondary)',
+                    letterSpacing: '0.07em',
                     textTransform: 'uppercase',
                   }}>
                     {slide.bottomKitLabel}
@@ -261,12 +260,12 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
                 <img
                   src={slide.bottomKitUrl}
                   alt={slide.bottomPlayerName ?? ''}
-                  style={{ width: 60, height: 60, objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                  style={{ width: 80, height: 80, objectFit: 'contain', display: 'block', margin: '0 auto' }}
                   onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                 />
                 {slide.bottomPlayerName && (
                   <p style={{
-                    margin: '0.25rem 0 0',
+                    margin: '0.1rem 0 0',
                     fontFamily: 'var(--font-body)',
                     fontSize: '0.7rem',
                     color: 'rgba(255,255,255,0.75)',
@@ -279,7 +278,7 @@ const Slide = forwardRef<HTMLDivElement, SlideProps>(function Slide({ slide, pos
               </div>
             )}
             {slide.bottomStat && (
-              <div className="wrapped-stat" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <div className="wrapped-stat" style={{ fontSize: 'clamp(3rem, 14vw, 7rem)', color: 'rgba(255,255,255,0.65)' }}>
                 {slide.bottomStat}
               </div>
             )}
