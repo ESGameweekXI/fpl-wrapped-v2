@@ -241,9 +241,10 @@ export async function syncManager(
     }
   }
 
-  // Sync transfers — matches: manager_id, event, element_in, element_in_cost, element_out, element_out_cost, time
+  // Sync transfers — manager_transfers uses BIGSERIAL PK with no natural unique constraint,
+  // so upsert would create duplicates. Use delete-then-insert instead.
   log('Syncing manager transfers...');
-  const transferUpserts = transfersData.map(
+  const transferInserts = transfersData.map(
     (t: {
       element_in: number;
       element_out: number;
@@ -261,12 +262,10 @@ export async function syncManager(
       time: t.time,
     })
   );
-  if (transferUpserts.length > 0) {
-    await db
-      .from('manager_transfers')
-      .upsert(transferUpserts, {
-        onConflict: 'manager_id,element_in,element_out,event',
-      });
+  console.log('[sync] transfers fetched from FPL:', transfersData.length, '| to insert:', transferInserts.length);
+  await db.from('manager_transfers').delete().eq('manager_id', teamId);
+  if (transferInserts.length > 0) {
+    await db.from('manager_transfers').insert(transferInserts);
   }
 
   log('Sync complete.');
