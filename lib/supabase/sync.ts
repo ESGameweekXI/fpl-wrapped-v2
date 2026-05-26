@@ -29,7 +29,7 @@ export async function syncManager(
     .from('managers')
     .select('updated_at')
     .eq('id', teamId)
-    .single();
+    .maybeSingle(); // use maybeSingle() not single() — returns null instead of error when no row found
 
   const ageMs = existing?.updated_at
     ? Date.now() - new Date(existing.updated_at).getTime()
@@ -141,6 +141,9 @@ export async function syncManager(
       total_points: number;
       rank: number;
       overall_rank: number;
+      event_transfers: number;
+      event_transfers_cost: number;
+      points_on_bench: number;
     }) => ({
       manager_id: teamId,
       event: gw.event,
@@ -148,6 +151,9 @@ export async function syncManager(
       total_points: gw.total_points,
       rank: gw.rank,
       overall_rank: gw.overall_rank,
+      event_transfers: gw.event_transfers,
+      event_transfers_cost: gw.event_transfers_cost,
+      points_on_bench: gw.points_on_bench,
     })
   );
   if (historyUpserts.length > 0) {
