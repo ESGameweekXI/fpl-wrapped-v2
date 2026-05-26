@@ -154,7 +154,7 @@ export default function LandingPage() {
               onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(0,255,194,0.3)')}
             />
             <p style={{ fontSize: '0.75rem', color: 'rgba(133,255,226,0.6)' }}>
-              Find your ID in the FPL app under Points &rarr; your team URL
+              Find it on the FPL site, under Points — fantasy.premierleague.com/entry/XXXXXXX
             </p>
           </div>
 
