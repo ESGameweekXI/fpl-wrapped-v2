@@ -114,7 +114,7 @@ function SlideShareButton({ getCardEl, slideId }: SlideShareButtonProps) {
         letterSpacing: '0.02em',
       }}
     >
-      {sharing ? 'Sharing…' : 'Share slide'}
+      {sharing ? 'Sharing…' : 'Share'}
     </button>
   );
 }
